@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GBD Policy Bundle",
+  "type": "object",
+  "required": ["policy_version", "effective_date", "description", "oversight_pathway", "retention_reference", "bands", "rules"],
+  "properties": {
+    "policy_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "effective_date": { "type": "string", "format": "date" },
+    "description": { "type": "string" },
+    "oversight_pathway": { "type": "string", "minLength": 1 },
+    "retention_reference": { "type": "string", "minLength": 1 },
+    "bands": {
+      "type": "object",
+      "required": ["high", "medium", "low"],
+      "properties": {
+        "high": { "type": "number", "minimum": 0, "maximum": 1 },
+        "medium": { "type": "number", "minimum": 0, "maximum": 1 },
+        "low": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "norm_refs", "articles", "obligation", "control_objective", "system_rule", "evidence_output", "condition", "confidence_weight", "reason_code", "description"],
+        "properties": {
+          "rule_id": { "type": "string", "pattern": "^RULE_[A-Z0-9_]+$" },
+          "norm_refs": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "articles": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "obligation": { "type": "string", "minLength": 10 },
+          "control_objective": { "type": "string", "minLength": 10 },
+          "system_rule": { "type": "string", "minLength": 10 },
+          "evidence_output": { "type": ["string", "array"] },
+          "condition": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["always", "input", "outcome"] },
+              "field": { "type": "string" },
+              "op": { "enum": ["eq", "neq", "lt", "lte", "gt", "gte", "between", "count_gt"] },
+              "value": {}
+            }
+          },
+          "confidence_weight": { "type": "number", "minimum": 0, "maximum": 1 },
+          "forces_human_review": { "type": "boolean" },
+          "reason_code": { "type": "string" },
+          "description": { "type": "string", "minLength": 5 },
+          "quality_check": { "type": "object" }
+        }
+      }
+    }
+  }
+}

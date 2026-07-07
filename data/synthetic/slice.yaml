@@ -1,0 +1,60 @@
+# slice.yaml — the 4 hand-designed demonstration records. These carry the
+# dissertation's demonstration chapter. Built to STRESS the law, not confirm
+# the rules. No real artists, labels, ISRCs or fingerprints.
+
+records:
+  # 1. CLEAN PASS — high confidence, no concerns. Automation disclosure still
+  #    emitted (DSA Art 17(3)(c) applies unconditionally).
+  - record_id: clean_pass
+    title: "Synthetic Track A"
+    artist: "Test Artist 01"
+    isrc: "SYN-00000001"
+    ownership_claims: [{ claimant: "C01", split_pct: 100 }]
+    behavioural_signals: { account_age_days: 540, prior_uploads: 22, takedown_history: 0 }
+    fingerprint_match_score: 0.02
+    metadata_complete: true
+    ai_generated: false
+    ai_disclosed: false
+    expected: { band: "High", direction: "no_concerns_identified", human_review: false }
+
+  # 2. AMBIGUOUS — split ownership + brand-new account + partial fingerprint.
+  #    Ownership conflict forces human review (GDPR Art 22; AI Act Art 14; DSA Art 20).
+  - record_id: ambiguous_review
+    title: "Synthetic Track B"
+    artist: "Test Artist 02"
+    isrc: "SYN-00000002"
+    ownership_claims: [{ claimant: "C02", split_pct: 60 }, { claimant: "C03", split_pct: 40 }]
+    behavioural_signals: { account_age_days: 4, prior_uploads: 0, takedown_history: 0 }
+    fingerprint_match_score: 0.41
+    metadata_complete: true
+    ai_generated: false
+    ai_disclosed: false
+    expected: { band: "Human-Review-Required", direction: "concerns_identified", human_review: true }
+
+  # 3. THIN REASONS — one weak signal only. Statement of reasons is structurally
+  #    complete (17(3)) but flagged 'thin' against 17(1). Boundary-thesis evidence.
+  - record_id: thin_reasons
+    title: "Synthetic Track C"
+    artist: "Test Artist 03"
+    isrc: "SYN-00000003"
+    ownership_claims: [{ claimant: "C04", split_pct: 100 }]
+    behavioural_signals: { account_age_days: 90, prior_uploads: 3, takedown_history: 0 }
+    fingerprint_match_score: 0.55
+    metadata_complete: true
+    ai_generated: false
+    ai_disclosed: false
+    expected: { band: "Medium", direction: "no_concerns_identified", human_review: false, quality: "thin" }
+
+  # 4. JUDGMENT ILLUSION — strong signals, confident concern. The pack reads
+  #    authoritative; the critique is that it invites being read AS adjudication.
+  - record_id: judgment_illusion
+    title: "Synthetic Track D"
+    artist: "Test Artist 04"
+    isrc: "SYN-00000004"
+    ownership_claims: [{ claimant: "C05", split_pct: 100 }]
+    behavioural_signals: { account_age_days: 12, prior_uploads: 1, takedown_history: 2 }
+    fingerprint_match_score: 0.93
+    metadata_complete: true
+    ai_generated: false
+    ai_disclosed: false
+    expected: { band: "High", direction: "concerns_identified", human_review: false }
