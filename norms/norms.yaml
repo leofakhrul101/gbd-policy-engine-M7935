@@ -1,9 +1,9 @@
 # norms.yaml — Regulatory Norm Layer (NORM-1..3)
 #
 # 8 norm records: GDPR Arts 5, 22, 24 · AI Act Arts 13, 14 · DSA Arts 14, 17, 20.
-# DSA_17 is complete (the vertical slice, verified against the DSA text).
-# The other 7 carry DRAFT obligation summaries only — Leo completes the analysis
-# in the "Norm Extraction — M7935" Notion database, then it is ported here.
+# All 8 carry completed doctrinal analysis, ported from the "Norm Extraction — M7935"
+# Notion database. DSA_17 is verified against the OJ text; the other 7 are drafted and
+# await that re-verification.
 # Every article reference must be re-verified against the OJ text before submission.
 
 norms:
@@ -20,15 +20,15 @@ norms:
       information is illegal content or incompatible with its terms and conditions.
     mandatory_contents:
       - ref: "Art 17(3)(a)"
-        requirement: "The action taken and, where relevant, its territorial scope and duration."
+        requirement: "Whether the decision entails removal, disabling of access, demotion, restriction of visibility, suspension or termination of monetary payments, or another measure under 17(1) — and, where relevant, the territorial scope and duration of the decision."
       - ref: "Art 17(3)(b)"
-        requirement: "The facts and circumstances relied on in taking the decision."
+        requirement: "The facts and circumstances relied on, including — where relevant — whether the decision was taken pursuant to an Art 16 notice or on voluntary own-initiative investigation, and where strictly necessary the identity of the notifier."
       - ref: "Art 17(3)(c)"
-        requirement: "Whether automated means were used in taking the decision."
+        requirement: "Where applicable, the use made of automated means in taking the decision, including whether the content was detected or identified using automated means."
       - ref: "Art 17(3)(d)"
-        requirement: "Where the decision concerns allegedly illegal content, the legal ground relied on."
+        requirement: "Where the decision concerns allegedly illegal content, a reference to the legal ground AND an explanation of why the information is considered illegal on that ground."
       - ref: "Art 17(3)(e)"
-        requirement: "Where based on terms incompatibility, the contractual ground relied on."
+        requirement: "Where based on incompatibility with the provider's terms, a reference to the contractual ground AND an explanation of why the information is considered incompatible with it."
       - ref: "Art 17(3)(f)"
         requirement: "Clear information on redress possibilities (complaint handling, out-of-court dispute, judicial)."
     applicability_to_artefact: >
@@ -36,6 +36,14 @@ norms:
       moderation decision within Art 17. The obligation is procedural and evidentiary:
       it does not require the decision to be correct, only that a clear, specific,
       automation-disclosing statement of reasons accompanies it.
+    actor_mapping: >
+      The hosting provider is the distributor storing content at the uploader's request;
+      the recipient owed the statement is the uploading artist. The artefact (and the
+      commercial system it models) is a processor and supplier to that provider, not a
+      DSA intermediary. No Art 17 duty attaches to the vendor; exposure is contractual.
+      Compliance-by-architecture is therefore not about who hands over the statement but
+      about whether the record contains everything needed to derive one — which yields a
+      falsifiable test: map every Art 17(3) field to an Evidence Pack field.
     mechanisability:
       verdict: partly
       mechanisable:
@@ -44,98 +52,287 @@ norms:
         - "Listing the facts/signals relied on (17(3)(b))"
         - "Referencing redress pathway (17(3)(f))"
       resists_mechanisation:
-        - "Whether the stated reasons are genuinely 'clear and specific' to a human reader (17(1)) is a qualitative judgement a template can approximate but not guarantee."
+        - "Whether a statement is 'clear and easily comprehensible and as precise and specific as reasonably possible under the given circumstances' (17(4)) is a qualitative judgement a template can approximate but not guarantee."
         - "The legal-ground determination (17(3)(d)) requires legal characterisation, not rule evaluation."
       critique_hook: >
         The artefact can guarantee the FORM of a statement of reasons but not its
-        SUFFICIENCY. A pack can satisfy every structural field of 17(3) and still fail
-        17(1)'s 'clear and specific' standard. This is the boundary thesis in miniature.
+        SUFFICIENCY. A pack can satisfy every minimum content requirement in 17(3) and
+        still fail the 17(4) standard — which is expressly qualitative and
+        circumstance-relative, and further requires that the information reasonably allow
+        the recipient to exercise the redress possibilities in 17(3)(f). Structural
+        completeness is testable; that is not. This is the boundary thesis in miniature.
 
   - norm_id: DSA_14
     instrument: "Regulation (EU) 2022/2065 (Digital Services Act)"
     article: "Article 14"
     title: "Terms and conditions"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: verified  # article reference checked against OJ text 4 Aug 2026
     oscola: "Regulation (EU) 2022/2065 (Digital Services Act) [2022] OJ L277/1, art 14"
     obligation: >
-      DRAFT — Providers must set out in their terms and conditions any restrictions
-      they impose, including information on algorithmic decision-making, in clear
-      language, and must apply those restrictions diligently, objectively and
-      proportionately.
-    mechanisability: { verdict: tbd }
+      Providers of intermediary services must set out in their terms and conditions any
+      restrictions they impose on use of the service, including information on the
+      policies, procedures, measures and tools used for content moderation — expressly
+      including algorithmic decision-making AND human review — and the rules of procedure
+      of their internal complaint-handling system. That information must be in clear,
+      plain, intelligible, user-friendly and unambiguous language and publicly available in
+      an easily accessible, machine-readable format (14(1)). Providers must act in a
+      diligent, objective and proportionate manner in applying and enforcing those
+      restrictions, with due regard to the rights and legitimate interests of all parties,
+      including the fundamental rights of recipients under the Charter (14(4)).
+    applicability_to_artefact: >
+      Upload triage enforces distributor terms. Art 14 does not ask whether a given
+      restriction was correct; it asks whether the ground for it was published in advance
+      and applied consistently. A versioned policy bundle whose effective_date precedes
+      the decision answers the first limb directly.
+      The disclosure limb bites on this artefact specifically: 14(1) requires the terms
+      themselves to describe the algorithmic decision-making used in content moderation.
+      An automated triage engine is therefore not merely permitted but required to be
+      disclosed in the deployer's published terms — its existence is a T&C fact, not an
+      implementation detail.
+    actor_mapping: >
+      The artefact evidences; the distributor enforces its own terms. What the record
+      proves is that the same published policy version was applied the same way across
+      cases.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Policy versioning with effective dates, so the ground predates the decision"
+        - "Identical rule evaluation across submissions (pure, deterministic engine)"
+        - "Recording which rules fired and on what facts"
+      resists_mechanisation:
+        - "Proportionality under 14(4) — whether a restriction is proportionate to the conduct, weighed against Charter rights including freedom of expression, is a judgement and not a threshold."
+        - "Whether the published terms are themselves in clear, plain, intelligible, user-friendly and unambiguous language is a drafting question outside the engine."
+        - "Objectivity under 14(4) is a property of the criteria, not of their application; the engine can evidence only the latter."
+      critique_hook: >
+        Deterministic rules give provable consistency of PROCESS. Any advisory ML layer is
+        where arbitrariness re-enters, and consistency of process is not the same as
+        objectivity of criteria: a rule applied identically to everyone can still be an
+        arbitrary rule.
 
   - norm_id: DSA_20
     instrument: "Regulation (EU) 2022/2065 (Digital Services Act)"
     article: "Article 20"
     title: "Internal complaint-handling system"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: verified  # article reference checked against OJ text 4 Aug 2026
     oscola: "Regulation (EU) 2022/2065 (Digital Services Act) [2022] OJ L277/1, art 20"
     obligation: >
-      DRAFT — Providers of online platforms must give recipients access to an
-      effective internal complaint-handling system against restriction decisions;
-      complaint decisions must not be taken solely by automated means.
-    mechanisability: { verdict: tbd }
+      Providers of online platforms must give recipients access to an effective internal
+      complaint-handling system, electronically and free of charge, for at least six
+      months following the decision (20(1)). Complaints must be handled in a timely,
+      non-discriminatory, diligent and non-arbitrary manner, and a decision reversed
+      without undue delay where the complaint shows it was unfounded (20(3)). Complainants
+      must be informed of the reasoned outcome and of out-of-court dispute settlement
+      under Art 21 (20(4)). Those outcomes must be taken under the supervision of
+      appropriately qualified staff and not solely on the basis of automated means (20(5)).
+    applicability_to_artefact: >
+      The artefact does not run a complaints process. It makes complaints resolvable: a
+      reviewer pulls the original Evidence Pack, sees which rules fired and on what facts,
+      and can overturn on that basis. Appeal is human; evidence is the pack.
+    actor_mapping: >
+      The complaint duty sits on the platform — note it binds providers of ONLINE
+      PLATFORMS, a narrower class than the hosting providers bound by Art 17, so a
+      distributor may owe Art 17 without owing Art 20. The artefact supplies the
+      reconstruction needed for a human to review a prior decision under the policy
+      version live at the time.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Referencing the named oversight pathway in every pack (also 17(3)(f))"
+        - "Reconstructing the original decision under the policy version in force at the time"
+        - "Integrity verification, so the record reviewed is the record produced"
+      resists_mechanisation:
+        - "Effectiveness of the complaint system — staffing, timeliness, independence of the reviewer — is organisational and sits entirely outside the artefact."
+        - "The 20(5) prohibition on solely automated complaint outcomes binds the platform's process, not the evidence layer."
+        - "The 20(3) duty to reverse an unfounded decision requires substantive re-assessment of the underlying question, which the engine cannot perform."
+      critique_hook: >
+        The artefact can make a decision REVIEWABLE without making review EFFECTIVE.
+        Reconstructability is necessary but not sufficient, and nothing in the record
+        reveals whether the human who reviewed it engaged with the reasons or waved it
+        through.
 
   # ── GDPR ─────────────────────────────────────────────────────────────────
   - norm_id: GDPR_5
     instrument: "Regulation (EU) 2016/679 (General Data Protection Regulation)"
     article: "Article 5"
     title: "Principles relating to processing of personal data"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: drafted   # analysis complete; article reference not yet re-verified against OJ text
     oscola: "Regulation (EU) 2016/679 (General Data Protection Regulation) [2016] OJ L119/1, art 5"
     obligation: >
-      DRAFT — Personal data must be processed lawfully, fairly and transparently;
-      the controller is responsible for, and must be able to demonstrate,
-      compliance (accountability, Art 5(2)).
-    mechanisability: { verdict: tbd }
+      Personal data must be processed lawfully, fairly and transparently; collected for
+      specified purposes and limited to what is necessary for them (5(1)(b)-(c)); and the
+      controller is responsible for, and must be able to demonstrate, compliance
+      (accountability, 5(2)).
+    applicability_to_artefact: >
+      Minimisation by necessity, not by volume. The decision needs a wide signal set, which
+      pulls against minimisation only if minimisation is read as "take little". Read
+      properly it means take nothing unnecessary: every field maps to a decision factor,
+      and a field that feeds no factor is not collected. The defence is not a small
+      footprint but that every element of it is justified by a control.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Categorical-only inputs in the Evidence Pack — signal categories, never raw personal data"
+        - "Field-to-factor traceability, so each collected field is tied to a rule that consumes it"
+        - "Provenance stamping and an append-only log for the 5(2) accountability limb"
+      resists_mechanisation:
+        - "Fairness under 5(1)(a) is not derivable from field-level necessity; a minimal dataset can still ground an unfair decision."
+        - "Purpose limitation depends on the controller's stated purpose, which sits outside the engine."
+      critique_hook: >
+        Data moves upstream and downstream through the distribution chain, and distributors
+        sometimes cannot supply what the decision needs. The engine decides on what is
+        available and records the gap rather than guessing. Recording an absence is honest,
+        but an honestly recorded gap is still a gap: it does not make the decision better
+        informed, it only makes the deficiency auditable.
 
   - norm_id: GDPR_22
     instrument: "Regulation (EU) 2016/679 (General Data Protection Regulation)"
     article: "Article 22"
     title: "Automated individual decision-making, including profiling"
-    status: draft   # TODO(Leo): complete from Notion analysis; note C-634/21 SCHUFA
+    status: drafted   # analysis complete; article reference not yet re-verified against OJ text
     oscola: "Regulation (EU) 2016/679 (General Data Protection Regulation) [2016] OJ L119/1, art 22"
+    case_law_note: "See Case C-634/21 SCHUFA on the breadth of what constitutes a decision based solely on automated processing."
     obligation: >
-      DRAFT — A data subject has the right not to be subject to a decision based
-      solely on automated processing which produces legal effects or similarly
-      significantly affects them; safeguards include the right to obtain human
-      intervention and to contest the decision.
-    mechanisability: { verdict: tbd }
+      A data subject has the right not to be subject to a decision based solely on
+      automated processing which produces legal effects or similarly significantly affects
+      them; where permitted, safeguards include the right to obtain human intervention, to
+      express a point of view, and to contest the decision (22(3)).
+    applicability_to_artefact: >
+      "Solely" attaches to the individual decision, not to the pipeline. Art 22(3) does not
+      require a human before each decision — it requires that intervention be obtainable,
+      which is an on-demand right rather than a per-item gate. The duty therefore falls by
+      decision class rather than across the whole system: outcomes with no adverse effect
+      may run fully automated, while adverse outcomes are permissible on automation
+      provided intervention is genuinely available afterwards. Human behind every adverse
+      decision, not in front of every upload.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Forcing human review on defined conditions (contested ownership) regardless of score"
+        - "Recording the routing decision and the named oversight pathway in every affected pack"
+        - "Making the escalation threshold itself a versioned control, so the gate is auditable"
+      resists_mechanisation:
+        - "Whether an effect 'similarly significantly affects' a person is a legal characterisation the engine cannot perform."
+        - "Whether post-hoc intervention is 'genuine' depends on the deployer's operational reality, not on the presence of a flag."
+      critique_hook: >
+        Two limits. First, Art 22 protects the person the decision is ABOUT: a permissive
+        outcome that should have been caught is not adverse to the uploader, and the party
+        actually harmed is a third-party rightsholder to whom Art 22 owes nothing — that
+        harm sits in DSA notice-and-action territory, not GDPR. Second, a recorded routing
+        flag evidences that review was required, not that meaningful review occurred.
 
   - norm_id: GDPR_24
     instrument: "Regulation (EU) 2016/679 (General Data Protection Regulation)"
     article: "Article 24"
     title: "Responsibility of the controller"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: drafted   # analysis complete; article reference not yet re-verified against OJ text
     oscola: "Regulation (EU) 2016/679 (General Data Protection Regulation) [2016] OJ L119/1, art 24"
     obligation: >
-      DRAFT — The controller must implement appropriate technical and organisational
-      measures to ensure, and to be able to demonstrate, that processing complies
-      with the Regulation; measures must be reviewed and updated.
-    mechanisability: { verdict: tbd }
+      The controller must implement appropriate technical and organisational measures to
+      ensure, and to be able to demonstrate, that processing complies with the Regulation;
+      those measures must be reviewed and updated where necessary.
+    applicability_to_artefact: >
+      The distributor is the controller — it determines why the data is processed. The
+      artefact operates on the controller's instructions and supplies the demonstration
+      limb: versioned policy, per-decision evidence, and an append-only log from which any
+      prior policy version can be reconstructed and replayed. The artefact is the
+      accountability TOOL, not the accountable party.
+    actor_mapping: >
+      Role mapping holds regardless of where the system technically integrates — existing
+      distributor APIs, or ingest at the point of hand-off to a DSP. Integration point is
+      an architecture question; the controller/processor split does not turn on it.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Policy version stamped into every decision record"
+        - "Append-only audit log producing a replayable trail"
+        - "Reconstruction of any prior policy version, so 'measures reviewed and updated' is evidenced by version history"
+      resists_mechanisation:
+        - "'Appropriate' is a proportionality assessment against the controller's own risk profile, nature and scale of processing — nothing in the code can determine it."
+        - "Organisational measures (training, governance, roles) are outside the artefact by definition."
+      critique_hook: >
+        The artefact proves that measures EXISTED and WERE APPLIED. Whether they were
+        adequate to the risk is a separate question it cannot reach — and a controller
+        producing perfect provenance for inadequate measures is exactly the failure mode
+        an accountability regime should be alert to.
 
   # ── AI Act ───────────────────────────────────────────────────────────────
   - norm_id: AIACT_13
     instrument: "Regulation (EU) 2024/1689 (Artificial Intelligence Act)"
     article: "Article 13"
     title: "Transparency and provision of information to deployers"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: drafted   # analysis complete; article reference not yet re-verified against OJ text
     oscola: "Regulation (EU) 2024/1689 (Artificial Intelligence Act) [2024] OJ L, 2024/1689, art 13"
     obligation: >
-      DRAFT — High-risk AI systems must be designed so that their operation is
-      sufficiently transparent to enable deployers to interpret the output and
-      use it appropriately. (Artefact stance: high-risk-ready by design,
-      satisfied irrespective of formal classification.)
-    mechanisability: { verdict: tbd }
+      High-risk AI systems must be designed and developed so that their operation is
+      sufficiently transparent to enable deployers to interpret the output and use it
+      appropriately, accompanied by instructions for use covering capabilities and
+      limitations, accuracy levels, foreseeable circumstances of malfunction, and the
+      human oversight measures in place.
+    applicability_to_artefact: >
+      Out of scope on a strict Annex III reading: upload triage for copyright integrity and
+      fraud is not obviously among the listed high-risk uses. The artefact is nevertheless
+      designed to the article. That is a commercial position, not a legal concession — the
+      regulatory floor is rising and deployers will be asked for this material irrespective
+      of formal classification.
+    disclosure_boundary: >
+      What is disclosed is the SYSTEM's behaviour: what it can and cannot detect, where
+      signals degrade, how it behaves when a signal source is unavailable, and what a human
+      must check before relying on an output. What is not disclosed is the per-tenant policy
+      layer — thresholds, weightings, and which rules a given deployer enables — which
+      belongs to the deployer and could not sit in generic instructions in any event.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Documenting detected signal categories and their known degradation conditions"
+        - "Specifying fail-safe behaviour when a signal source is unavailable (hold for review, not guess)"
+        - "Publishing the oversight measures built into the system"
+      resists_mechanisation:
+        - "The Annex III classification question itself."
+        - "'Sufficiently transparent' is judged by deployer comprehension, not by the existence of a document."
+      critique_hook: >
+        The disclosure duty runs to the deployer under contract, not to the public.
+        Stating where a system fails is not the same as revealing how it works, so the
+        intellectual-property exposure is smaller than the article first appears — but the
+        converse also holds: instructions that protect proprietary method may be exactly
+        the instructions that leave a deployer unable to interpret the output.
 
   - norm_id: AIACT_14
     instrument: "Regulation (EU) 2024/1689 (Artificial Intelligence Act)"
     article: "Article 14"
     title: "Human oversight"
-    status: draft   # TODO(Leo): complete from Notion analysis
+    status: verified  # article reference checked against OJ text 4 Aug 2026
     oscola: "Regulation (EU) 2024/1689 (Artificial Intelligence Act) [2024] OJ L, 2024/1689, art 14"
     obligation: >
-      DRAFT — High-risk AI systems must be designed so they can be effectively
-      overseen by natural persons during use, with oversight measures built into
-      the system or identified for implementation by the deployer.
-    mechanisability: { verdict: tbd }
+      High-risk AI systems must be designed so they can be effectively overseen by natural
+      persons during use. Oversight must enable the person to understand the system's
+      capacities and limitations, remain aware of automation bias, correctly interpret
+      output, decide not to use it, and override or halt operation.
+    applicability_to_artefact: >
+      The bar is not the presence of a human but a human equipped to disagree. The
+      prevailing baseline at distributors is a reviewer working an automated queue item by
+      item with no stated reasons and no feedback path — precisely the automation-bias
+      failure the article targets. The artefact's answer is that independent, heterogeneous
+      signals are surfaced with the facts they rest on, and deterministic policy binds the
+      outcome, so override is real rather than nominal. Divergence between signals is itself
+      the oversight cue: it marks where the system is uncertain. Human placement matches
+      Art 22 — the review queue and adverse outcomes, not every upload.
+    mechanisability:
+      verdict: partly
+      mechanisable:
+        - "Routing to a named oversight pathway and recording it"
+        - "Surfacing which rules fired and on which facts, rather than a bare score"
+        - "Forcing review on defined conditions irrespective of score"
+        - "Exposing signal divergence as an uncertainty indicator"
+      resists_mechanisation:
+        - "Automation bias is a property of the reviewer, not of the system; no field in a record establishes whether the human genuinely engaged."
+        - "Whether oversight was 'effective' in a given instance is observable only after the fact, and not from the record alone."
+      critique_hook: >
+        Divergence between signals helps the reviewer; correlated failure does not. Signals
+        sharing a blind spot fail together, producing false consensus that reads to the
+        reviewer as corroboration — agreement can be a comfort rather than a green light.
+        Heterogeneity across unrelated methods (deterministic checks, metadata integrity,
+        fingerprinting, recognition, synthetic-audio detection) spreads that risk but does
+        not eliminate it. Advisory models are synthetic-trained and unvalidated on real
+        traffic, so oversight properly leans on the deterministic guardrails rather than the
+        model layer; and detection accuracy figures belong to third-party vendors, since the
+        system orchestrates under deployer weightings and asserts no truth about content.
