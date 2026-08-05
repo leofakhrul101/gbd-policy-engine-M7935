@@ -1,0 +1,75 @@
+{
+  "pack_id": "edc2a8ef-6d00-5e32-a439-8b74ab2b9ad1",
+  "decision_timestamp": "2026-08-04T09:00:00Z",
+  "policy_version": "0.1.0",
+  "decision_outcome": "ALLOW",
+  "confidence_score": 1.0,
+  "confidence_band": "High",
+  "triggered_rules": [
+    {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "description": "Structured statement of reasons emitted per DSA Art 17."
+    },
+    {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "description": "Policy version and decision recorded for accountability (GDPR Arts 5(2), 24)."
+    }
+  ],
+  "input_categories": [
+    "no_risk_signals_detected"
+  ],
+  "regulatory_mapping": {
+    "DSA Art 17(1)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(a)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(b)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(c)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(f)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "GDPR Art 24": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "GDPR Art 5(2)": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "DSA Art 17 \u2014 statement of reasons": {
+      "action_taken": "ALLOW",
+      "action_scope": "submission-level; no duration set by this system",
+      "facts_relied_on": [],
+      "trigger_source": "own_initiative_upload_screening",
+      "automated_means_used": true,
+      "solely_automated": true,
+      "intervention_point": "none_no_adverse_effect",
+      "legal_ground": null,
+      "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
+      "redress": "internal-complaint-v1",
+      "quality_flag_17_4": "informational"
+    },
+    "GDPR Art 22 \u2014 automated decision-making": {
+      "decision_outcome": "ALLOW",
+      "adverse": false,
+      "solely_automated": true,
+      "intervention_point": "none_no_adverse_effect",
+      "status": "evidenced"
+    }
+  },
+  "plain_english_explanation": "This submission was accepted and no restriction was applied. The decision was made by an automated system using policy version 0.1.0. The system's confidence in the assessment behind it is 1.000 (High). No risk signals were detected in this submission. You can contest this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
+  "oversight_pathway": "internal-complaint-v1",
+  "retention_reference": "retention-policy-v1 (synthetic demo: indefinite)",
+  "integrity_hash": "219942d0e023d9e6582f429a31d0ca348dfdb3754c2df6488044ccd29b633211"
+}

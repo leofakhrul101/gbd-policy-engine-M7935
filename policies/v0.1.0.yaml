@@ -8,7 +8,16 @@
 #   R = sum of confidence_weight over triggered risk rules (clamped to 1.0)
 #   risk_direction = "concerns_identified" if R >= 0.5 else "no_concerns_identified"
 #   confidence_score = |1 - 2R|  (confidence in the assessment, NOT a verdict)
-#   band from thresholds below. No categorical Allow/Reject exists anywhere.
+#   band from thresholds below.
+#   decision_outcome from the `outcomes` thresholds below, on R.
+#
+# Outcome and confidence are separate. The outcome is what the deployer does;
+# the confidence score is how sure the system is about the assessment behind it.
+# A REJECT issued at high confidence is still not a legal determination.
+#
+# Which outcomes may be reached on automation alone is a policy question with a
+# legal answer (GDPR Art 22), so it lives here as a versioned control rather
+# than in the engine: see `adverse_outcomes` and `gated_outcomes`.
 
 policy_version: "0.1.0"
 effective_date: "2026-07-06"
@@ -16,11 +25,26 @@ description: "First full bundle: 9 rules over GDPR 5/22/24, AI Act 13/14, DSA 14
 oversight_pathway: "internal-complaint-v1"   # DSA Arts 17(3)(f), 20
 retention_reference: "retention-policy-v1 (synthetic demo: indefinite)"
 
-bands:            # inclusive lower bounds, evaluated high -> low
+bands:            # inclusive lower bounds on confidence_score, evaluated high -> low
   high: 0.80
   medium: 0.50
   low: 0.20
   # below low -> Human-Review-Required
+
+outcomes:         # inclusive lower bounds on R (accumulated risk weight)
+  reject: 0.80
+  quarantine: 0.50
+  review: 0.30
+  # below review -> ALLOW
+
+# Outcomes adverse to the uploader. These are the ones GDPR Art 22 engages.
+adverse_outcomes: ["REVIEW", "QUARANTINE", "REJECT"]
+
+# Of those, the ones that may NOT be reached on automation alone. REVIEW is
+# gated before the decision takes effect. QUARANTINE and REJECT run
+# automatically, with intervention available afterwards via oversight_pathway,
+# which is the Art 22(3) route rather than an Art 22(1) prohibition.
+gated_outcomes: ["REVIEW"]
 
 rules:
   # ── Risk rules (move the score) ──────────────────────────────────────────

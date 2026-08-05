@@ -1,9 +1,14 @@
 """Evidence Pack Layer — one regulator-legible record per decision (EP-1..6).
 
-Schema per REQUIREMENTS §6 — exactly these 12 fields:
-  pack_id, decision_timestamp, policy_version, confidence_score, confidence_band,
-  triggered_rules, input_categories, regulatory_mapping, plain_english_explanation,
-  oversight_pathway, retention_reference, integrity_hash
+Schema — exactly these 13 fields:
+  pack_id, decision_timestamp, policy_version, decision_outcome, confidence_score,
+  confidence_band, triggered_rules, input_categories, regulatory_mapping,
+  plain_english_explanation, oversight_pathway, retention_reference, integrity_hash
+
+decision_outcome carries the bounded workflow step named in the approved project
+outline (ALLOW / REVIEW / QUARANTINE / REJECT). It sits next to, not instead of,
+the confidence band: the outcome is what happens, the band is how sure the system
+is about the assessment underneath it.
 
 The DSA Art 17 statement-of-reasons block lives inside regulatory_mapping so the
 top-level schema stays exact.
@@ -22,10 +27,10 @@ from gbd.explainer import plain_english
 from gbd.policy import PolicyBundle
 
 PACK_FIELDS = [
-    "pack_id", "decision_timestamp", "policy_version", "confidence_score",
-    "confidence_band", "triggered_rules", "input_categories", "regulatory_mapping",
-    "plain_english_explanation", "oversight_pathway", "retention_reference",
-    "integrity_hash",
+    "pack_id", "decision_timestamp", "policy_version", "decision_outcome",
+    "confidence_score", "confidence_band", "triggered_rules", "input_categories",
+    "regulatory_mapping", "plain_english_explanation", "oversight_pathway",
+    "retention_reference", "integrity_hash",
 ]
 
 _NAMESPACE = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")  # RFC 4122 namespace
@@ -51,11 +56,19 @@ def build_pack(
     ts = timestamp or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     regulatory = dict(result.regulatory_mapping)
     regulatory["DSA Art 17 — statement of reasons"] = result.statement_of_reasons
+    regulatory.setdefault("GDPR Art 22 — automated decision-making", {
+        "decision_outcome": result.decision_outcome,
+        "adverse": result.decision_outcome in bundle.adverse_outcomes,
+        "solely_automated": result.solely_automated,
+        "intervention_point": result.intervention_point,
+        "status": "evidenced",
+    })
     pack: dict[str, Any] = {
         "pack_id": pack_id or str(uuid.uuid5(_NAMESPACE, ts + bundle.policy_version + json.dumps(
             [t["rule_id"] for t in result.triggered_rules]) + str(result.confidence_score))),
         "decision_timestamp": ts,
         "policy_version": bundle.policy_version,
+        "decision_outcome": result.decision_outcome,
         "confidence_score": result.confidence_score,
         "confidence_band": result.confidence_band,
         "triggered_rules": result.triggered_rules,

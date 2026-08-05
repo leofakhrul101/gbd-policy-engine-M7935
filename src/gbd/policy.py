@@ -21,6 +21,9 @@ class PolicyBundle:
     oversight_pathway: str
     retention_reference: str
     bands: dict[str, float]
+    outcomes: dict[str, float]
+    adverse_outcomes: list[str]
+    gated_outcomes: list[str]
     rules: list[dict[str, Any]]
     raw: dict[str, Any] = field(repr=False, default_factory=dict)
 
@@ -46,6 +49,9 @@ def bundle_from_dict(data: dict[str, Any]) -> PolicyBundle:
         oversight_pathway=data["oversight_pathway"],
         retention_reference=data["retention_reference"],
         bands=dict(data["bands"]),
+        outcomes=dict(data["outcomes"]),
+        adverse_outcomes=list(data["adverse_outcomes"]),
+        gated_outcomes=list(data["gated_outcomes"]),
         rules=list(data["rules"]),
         raw=data,
     )

@@ -77,7 +77,7 @@ Reproduce: `python -m pytest tests/test_engine.py` or re-run any record via `gbd
       "legal_ground": null,
       "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
       "redress": "internal-complaint-v1",
-      "quality_flag_17_1": "informational"
+      "quality_flag_17_4": "informational"
     }
   },
   "plain_english_explanation": "This submission was assessed by an automated system using policy version 0.1.0. The system's confidence in its assessment is 1.000 (High). No risk signals were detected in this submission. You can contest this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
@@ -203,7 +203,7 @@ Reproduce: `python -m pytest tests/test_engine.py` or re-run any record via `gbd
       "legal_ground": null,
       "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
       "redress": "internal-complaint-v1",
-      "quality_flag_17_1": "specific"
+      "quality_flag_17_4": "specific"
     }
   },
   "plain_english_explanation": "This submission was assessed by an automated system using policy version 0.1.0. The system's confidence in its assessment is 0.500 (Human-Review-Required). The assessment relied on the following observations: more than one party claims ownership of this recording; the audio partially matches an existing recording; the uploading account was created less than 30 days ago. This outcome has been routed to a human reviewer and no automated restriction takes effect on its own. You can contest or ask about this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
@@ -298,7 +298,7 @@ Reproduce: `python -m pytest tests/test_engine.py` or re-run any record via `gbd
       "legal_ground": null,
       "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
       "redress": "internal-complaint-v1",
-      "quality_flag_17_1": "informational"
+      "quality_flag_17_4": "informational"
     }
   },
   "plain_english_explanation": "This submission was assessed by an automated system using policy version 0.1.0. The system's confidence in its assessment is 0.500 (Medium). The assessment relied on the following observations: the audio partially matches an existing recording. You can contest this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
@@ -407,7 +407,7 @@ Reproduce: `python -m pytest tests/test_engine.py` or re-run any record via `gbd
       "legal_ground": null,
       "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
       "redress": "internal-complaint-v1",
-      "quality_flag_17_1": "specific"
+      "quality_flag_17_4": "specific"
     }
   },
   "plain_english_explanation": "This submission was assessed by an automated system using policy version 0.1.0. The system's confidence in its assessment is 0.900 (High). The assessment relied on the following observations: the audio strongly matches an existing recording; the uploading account was created less than 30 days ago; the uploading account has previous takedowns. You can contest this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",

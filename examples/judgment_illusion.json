@@ -1,0 +1,97 @@
+{
+  "pack_id": "c655e88f-46e6-5e41-94b4-e514b2eee9d6",
+  "decision_timestamp": "2026-08-04T09:00:00Z",
+  "policy_version": "0.1.0",
+  "decision_outcome": "REJECT",
+  "confidence_score": 0.9,
+  "confidence_band": "High",
+  "triggered_rules": [
+    {
+      "rule_id": "RULE_FINGERPRINT_STRONG",
+      "description": "Strong acoustic fingerprint match against an existing recording."
+    },
+    {
+      "rule_id": "RULE_NEW_ACCOUNT",
+      "description": "Uploading account is less than 30 days old."
+    },
+    {
+      "rule_id": "RULE_TAKEDOWN_HISTORY",
+      "description": "Account has one or more prior takedowns."
+    },
+    {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "description": "Structured statement of reasons emitted per DSA Art 17."
+    },
+    {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "description": "Policy version and decision recorded for accountability (GDPR Arts 5(2), 24)."
+    }
+  ],
+  "input_categories": [
+    "fingerprint_match_strong",
+    "account_age_lt_30d",
+    "prior_takedowns_present"
+  ],
+  "regulatory_mapping": {
+    "DSA Art 17(1)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(a)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(b)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(c)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(f)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "GDPR Art 24": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "GDPR Art 5(2)": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "DSA Art 14": {
+      "rule_id": "RULE_FINGERPRINT_STRONG",
+      "status": "evidenced"
+    },
+    "DSA Art 17 \u2014 statement of reasons": {
+      "action_taken": "REJECT",
+      "action_scope": "submission-level; no duration set by this system",
+      "facts_relied_on": [
+        "fingerprint_match_strong",
+        "account_age_lt_30d",
+        "prior_takedowns_present"
+      ],
+      "trigger_source": "own_initiative_upload_screening",
+      "automated_means_used": true,
+      "solely_automated": true,
+      "intervention_point": "after_decision_via_oversight_pathway",
+      "legal_ground": null,
+      "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
+      "redress": "internal-complaint-v1",
+      "quality_flag_17_4": "specific"
+    },
+    "GDPR Art 22 \u2014 automated decision-making": {
+      "decision_outcome": "REJECT",
+      "adverse": true,
+      "solely_automated": true,
+      "intervention_point": "after_decision_via_oversight_pathway",
+      "status": "evidenced"
+    }
+  },
+  "plain_english_explanation": "This submission was not accepted for distribution. The decision was made by an automated system using policy version 0.1.0. The system's confidence in the assessment behind it is 0.900 (High). The assessment relied on the following observations: the audio strongly matches an existing recording; the uploading account was created less than 30 days ago; the uploading account has previous takedowns. This decision was taken by automated means without a person reviewing it first. You have the right to ask for a person to look at it, to give your side, and to challenge the decision, via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
+  "oversight_pathway": "internal-complaint-v1",
+  "retention_reference": "retention-policy-v1 (synthetic demo: indefinite)",
+  "integrity_hash": "274b3ecb889a509e3a9b98c0feb127068ba7c79138ddd3f756c329926290a183"
+}

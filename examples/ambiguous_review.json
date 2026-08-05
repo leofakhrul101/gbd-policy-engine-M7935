@@ -1,0 +1,113 @@
+{
+  "pack_id": "804f01b1-df45-5f0f-a87e-b85c1c108465",
+  "decision_timestamp": "2026-08-04T09:00:00Z",
+  "policy_version": "0.1.0",
+  "decision_outcome": "REVIEW",
+  "confidence_score": 0.5,
+  "confidence_band": "Human-Review-Required",
+  "triggered_rules": [
+    {
+      "rule_id": "RULE_OWNERSHIP_CONFLICT",
+      "description": "Conflicting ownership claims detected on submitted recording."
+    },
+    {
+      "rule_id": "RULE_FINGERPRINT_PARTIAL",
+      "description": "Partial acoustic fingerprint match against an existing recording."
+    },
+    {
+      "rule_id": "RULE_NEW_ACCOUNT",
+      "description": "Uploading account is less than 30 days old."
+    },
+    {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "description": "Structured statement of reasons emitted per DSA Art 17."
+    },
+    {
+      "rule_id": "RULE_HUMAN_REVIEW_ROUTING",
+      "description": "Decision routed to human reviewer (GDPR Art 22 / AI Act Art 14 / DSA Art 20)."
+    },
+    {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "description": "Policy version and decision recorded for accountability (GDPR Arts 5(2), 24)."
+    }
+  ],
+  "input_categories": [
+    "multiple_ownership_claims",
+    "fingerprint_match_partial",
+    "account_age_lt_30d"
+  ],
+  "regulatory_mapping": {
+    "DSA Art 17(1)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(a)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(b)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(c)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(f)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "GDPR Art 22": {
+      "rule_id": "RULE_HUMAN_REVIEW_ROUTING",
+      "status": "evidenced"
+    },
+    "AI Act Art 14": {
+      "rule_id": "RULE_HUMAN_REVIEW_ROUTING",
+      "status": "evidenced"
+    },
+    "DSA Art 20": {
+      "rule_id": "RULE_HUMAN_REVIEW_ROUTING",
+      "status": "evidenced"
+    },
+    "GDPR Art 24": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "GDPR Art 5(2)": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "DSA Art 14": {
+      "rule_id": "RULE_FINGERPRINT_PARTIAL",
+      "status": "evidenced"
+    },
+    "DSA Art 17 \u2014 statement of reasons": {
+      "action_taken": "REVIEW",
+      "action_scope": "submission-level; no duration set by this system",
+      "facts_relied_on": [
+        "multiple_ownership_claims",
+        "fingerprint_match_partial",
+        "account_age_lt_30d"
+      ],
+      "trigger_source": "own_initiative_upload_screening",
+      "automated_means_used": true,
+      "solely_automated": false,
+      "intervention_point": "before_decision_takes_effect",
+      "legal_ground": null,
+      "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
+      "redress": "internal-complaint-v1",
+      "quality_flag_17_4": "specific"
+    },
+    "GDPR Art 22 \u2014 automated decision-making": {
+      "decision_outcome": "REVIEW",
+      "adverse": true,
+      "solely_automated": false,
+      "intervention_point": "before_decision_takes_effect",
+      "status": "evidenced"
+    }
+  },
+  "plain_english_explanation": "This submission has been held for review by a person before anything takes effect. The decision was made by an automated system using policy version 0.1.0. The system's confidence in the assessment behind it is 0.500 (Human-Review-Required). The assessment relied on the following observations: more than one party claims ownership of this recording; the audio partially matches an existing recording; the uploading account was created less than 30 days ago. A person will look at this before it takes effect. You can also contest it or ask about it via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
+  "oversight_pathway": "internal-complaint-v1",
+  "retention_reference": "retention-policy-v1 (synthetic demo: indefinite)",
+  "integrity_hash": "34e83004fee458b035f51338123e4c974878153ebe3db348cb62d5b184d64f6b"
+}

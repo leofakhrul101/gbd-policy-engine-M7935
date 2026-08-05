@@ -1,9 +1,16 @@
-"""Plain-English explanation generator (AI Act Art 13; DSA Art 17(1)) — EP-4."""
+"""Plain-English explanation generator (AI Act Art 13; DSA Art 17(4)) — EP-4."""
 
 from __future__ import annotations
 
 from gbd.engine import EvaluationResult
 from gbd.policy import PolicyBundle
+
+_OUTCOME_PHRASES = {
+    "ALLOW": "This submission was accepted and no restriction was applied.",
+    "REVIEW": "This submission has been held for review by a person before anything takes effect.",
+    "QUARANTINE": "This submission has been held back from distribution.",
+    "REJECT": "This submission was not accepted for distribution.",
+}
 
 _FACT_PHRASES = {
     "multiple_ownership_claims": "more than one party claims ownership of this recording",
@@ -17,9 +24,10 @@ _FACT_PHRASES = {
 
 def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
     parts: list[str] = []
+    parts.append(_OUTCOME_PHRASES[result.decision_outcome])
     parts.append(
-        f"This submission was assessed by an automated system using policy version "
-        f"{bundle.policy_version}. The system's confidence in its assessment is "
+        f"The decision was made by an automated system using policy version "
+        f"{bundle.policy_version}. The system's confidence in the assessment behind it is "
         f"{result.confidence_score:.3f} ({result.confidence_band})."
     )
     if result.facts_relied_on:
@@ -29,9 +37,14 @@ def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
         parts.append("No risk signals were detected in this submission.")
     if result.human_review_required:
         parts.append(
-            f"This outcome has been routed to a human reviewer and no automated "
-            f"restriction takes effect on its own. You can contest or ask about this "
-            f"outcome via: {bundle.oversight_pathway}."
+            f"A person will look at this before it takes effect. You can also contest it "
+            f"or ask about it via: {bundle.oversight_pathway}."
+        )
+    elif result.decision_outcome in bundle.adverse_outcomes:
+        parts.append(
+            f"This decision was taken by automated means without a person reviewing it "
+            f"first. You have the right to ask for a person to look at it, to give your "
+            f"side, and to challenge the decision, via: {bundle.oversight_pathway}."
         )
     else:
         parts.append(f"You can contest this outcome via: {bundle.oversight_pathway}.")

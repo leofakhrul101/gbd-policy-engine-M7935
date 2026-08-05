@@ -1,0 +1,85 @@
+{
+  "pack_id": "8aeae41d-c0d6-5c6e-86e2-b2f359d87f2d",
+  "decision_timestamp": "2026-08-04T09:00:00Z",
+  "policy_version": "0.1.0",
+  "decision_outcome": "ALLOW",
+  "confidence_score": 0.5,
+  "confidence_band": "Medium",
+  "triggered_rules": [
+    {
+      "rule_id": "RULE_FINGERPRINT_PARTIAL",
+      "description": "Partial acoustic fingerprint match against an existing recording."
+    },
+    {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "description": "Structured statement of reasons emitted per DSA Art 17."
+    },
+    {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "description": "Policy version and decision recorded for accountability (GDPR Arts 5(2), 24)."
+    }
+  ],
+  "input_categories": [
+    "fingerprint_match_partial"
+  ],
+  "regulatory_mapping": {
+    "DSA Art 17(1)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(a)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(b)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(c)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "DSA Art 17(3)(f)": {
+      "rule_id": "RULE_STATEMENT_OF_REASONS",
+      "status": "evidenced"
+    },
+    "GDPR Art 24": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "GDPR Art 5(2)": {
+      "rule_id": "RULE_PROVENANCE_RECORD",
+      "status": "evidenced"
+    },
+    "DSA Art 14": {
+      "rule_id": "RULE_FINGERPRINT_PARTIAL",
+      "status": "evidenced"
+    },
+    "DSA Art 17 \u2014 statement of reasons": {
+      "action_taken": "ALLOW",
+      "action_scope": "submission-level; no duration set by this system",
+      "facts_relied_on": [
+        "fingerprint_match_partial"
+      ],
+      "trigger_source": "own_initiative_upload_screening",
+      "automated_means_used": true,
+      "solely_automated": true,
+      "intervention_point": "none_no_adverse_effect",
+      "legal_ground": null,
+      "contractual_ground": "distributor terms: metadata, ownership and originality requirements",
+      "redress": "internal-complaint-v1",
+      "quality_flag_17_4": "informational"
+    },
+    "GDPR Art 22 \u2014 automated decision-making": {
+      "decision_outcome": "ALLOW",
+      "adverse": false,
+      "solely_automated": true,
+      "intervention_point": "none_no_adverse_effect",
+      "status": "evidenced"
+    }
+  },
+  "plain_english_explanation": "This submission was accepted and no restriction was applied. The decision was made by an automated system using policy version 0.1.0. The system's confidence in the assessment behind it is 0.500 (Medium). The assessment relied on the following observations: the audio partially matches an existing recording. You can contest this outcome via: internal-complaint-v1. This record is a readiness signal produced by compliance-support software. It is not a legal determination and does not constitute legal advice.",
+  "oversight_pathway": "internal-complaint-v1",
+  "retention_reference": "retention-policy-v1 (synthetic demo: indefinite)",
+  "integrity_hash": "9af295e83b34c892eb67a9f2289c8daf834ba17f042804e48de514e0cb188310"
+}

@@ -1,13 +1,13 @@
 # gbd-policy-engine
 
-**Governance-by-Design Policy Engine** — academic demonstration artefact for M7935
-(LLM Law, Technology & Innovation, University of Strathclyde). Translates GDPR /
-EU AI Act / DSA obligations into executable rules with regulator-legible evidence
-output.
+**Governance-by-Design Policy Engine**, the demonstration artefact for M7935
+(LLM Law, Technology & Innovation, University of Strathclyde). It turns
+obligations under the GDPR, the EU AI Act and the DSA into executable rules, and
+writes one regulator-legible record for every decision it makes.
 
-> **Not legal advice.** A readiness signal, not a determination of compliance.
-> Synthetic data only. Re-authored clean for this dissertation; no code from any
-> prior commercial work.
+> **Not legal advice.** A readiness signal, not a determination that anyone has
+> complied with anything. Synthetic data only. Re-authored clean for this
+> dissertation; no code from any prior commercial work.
 
 ## Run it
 
@@ -17,73 +17,128 @@ pytest                      # full suite incl. threshold-boundary tests
 streamlit run demo/app.py   # 6-step supervisor walkthrough
 ```
 
-## Architecture — five layers
+No install needed to see the output: open `docs/walkthrough.html` in a browser,
+or read the four committed records in `examples/`.
+
+## What it does, and what it does not
+
+It does not listen to music. It takes what a distributor already knows about a
+submission (how many parties claim ownership, how strongly the audio matches an
+existing recording, how old the account is, whether it declares AI use), applies
+a versioned policy, reaches one of four bounded outcomes, and writes a sealed
+Evidence Pack recording how it got there.
+
+Detection is an input assumption, not something this artefact performs. The legal
+question begins after the signals arrive.
+
+## Architecture, five layers
 
 | Layer | Where | What |
 |---|---|---|
-| 1 · Regulatory Norm | `norms/norms.yaml` | OSCOLA-citable records for GDPR Arts 5/22/24, AI Act Arts 13/14, DSA Arts 14/17/20 |
-| 2 · Policy Translation | `policies/v0.1.0.yaml` (+ JSON Schema) | Versioned rules, each carrying its full Norm-to-Control chain |
-| 3 · Decision Logic | `src/gbd/engine.py` | Pure, deterministic confidence scoring — **no Allow/Reject exists** |
-| 4 · Evidence Pack | `src/gbd/evidence_pack.py` | One 12-field, SHA-256-hashed, regulator-legible record per decision |
+| 1 · Regulatory Norm | `norms/norms.yaml` | OSCOLA-citable records for GDPR Arts 5/22/24, AI Act Arts 13/14, DSA Arts 14/17/20, each with a mechanisability verdict |
+| 2 · Policy Translation | `policies/v0.1.0.yaml` (+ JSON Schema) | Versioned rules, each carrying its full Norm-to-Control chain, plus the outcome thresholds |
+| 3 · Decision Logic | `src/gbd/engine.py` | Pure, deterministic. Produces an outcome and a confidence score |
+| 4 · Evidence Pack | `src/gbd/evidence_pack.py` | One 13-field, SHA-256-hashed record per decision |
 | 5 · Governance & Provenance | `src/gbd/audit_log.py` | Append-only SQLite log; any prior policy version reconstructable and replayable |
 
-## Scoring semantics
+## Outcomes and confidence are separate
 
-`R` = sum of triggered risk-rule weights (clamped to 1.0).
-`confidence_score = |1 − 2R|` — the system's confidence **in its own assessment**,
-not a verdict. `R = 0` → confidently clean; `R = 1` → confidently concerning;
-`R ≈ 0.5` → genuinely uncertain → **Human-Review-Required**. Bands come from
-policy-defined thresholds; contested ownership forces human review regardless of
-score (GDPR Art 22).
+The engine produces a **bounded workflow outcome**: `ALLOW`, `REVIEW`,
+`QUARANTINE` or `REJECT`. It also produces a **confidence score**. These answer
+different questions and are deliberately kept apart.
 
-This shape is deliberate: the engine can be *confident* and still never
-*adjudicate*. Confidence describes evidence quality; judgment stays human
-(the boundary thesis).
+`R` is the sum of triggered risk-rule weights, clamped to 1.0. The outcome comes
+from thresholds on `R` set in the policy bundle. The confidence score is
+`|1 - 2R|`, which describes how sure the system is about the *assessment*, not
+about the outcome. `R = 0` is confidently clean, `R = 1` is confidently
+concerning, and `R` near 0.5 is genuine uncertainty.
 
-## Norm-to-Control — two worked examples
+So a `REJECT` issued at 0.9 confidence is still not a legal determination. The
+statement of reasons that accompanies it carries no legal ground, because the
+engine cannot supply one. That separation is the boundary thesis.
 
-The methodology this artefact demonstrates:
-**Legal Norm → Obligation → Control Objective → System Rule → Evidence Output**
+## Where the human sits
 
-### Example 1 — DSA Art 17 (statement of reasons)
+Not in front of every upload, which does not scale. Behind the outcomes that
+actually affect someone.
+
+| Outcome | Adverse to the uploader | Solely automated | Intervention |
+|---|---|---|---|
+| `ALLOW` | no | yes | not engaged, no adverse effect |
+| `REVIEW` | yes | no | before the decision takes effect |
+| `QUARANTINE` | yes | yes | after the fact, via the oversight pathway |
+| `REJECT` | yes | yes | after the fact, via the oversight pathway |
+
+This is GDPR Art 22 read by decision class rather than across the pipeline.
+"Solely" attaches to the individual decision, and Art 22(3) requires intervention
+to be *obtainable*, not to precede every item. A rule carrying
+`forces_human_review` overrides the threshold entirely: contested ownership goes
+to a person whatever the score says.
+
+Which outcomes may be reached on automation alone is read from the bundle
+(`gated_outcomes`), not hardcoded, because it is a legal question and therefore
+has to be a versioned, auditable control.
+
+## Norm-to-Control, two worked examples
+
+**Legal Norm -> Obligation -> Control Objective -> System Rule -> Evidence Output**
+
+### DSA Art 17, statement of reasons
 
 | Stage | Content |
 |---|---|
-| Norm | DSA Art 17: clear and specific statement of reasons for any restriction |
-| Obligation | State action taken, facts relied on, automated means used, redress route (17(3)(a)–(f)) |
+| Norm | Art 17(1): a clear and specific statement of reasons for any restriction |
+| Obligation | Art 17(3)(a) to (f): action taken, facts relied on, whether automated means were used, legal or contractual ground with an explanation, redress route |
 | Control objective | Every decision emits a structured, automation-disclosing statement of reasons |
 | System rule | `RULE_STATEMENT_OF_REASONS` (condition: always) populates the statement block in every pack |
-| Evidence output | `regulatory_mapping["DSA Art 17 — statement of reasons"]` + plain-English explanation |
+| Evidence output | The statement block inside `regulatory_mapping`, plus the plain-English explanation |
 
-The block also carries `quality_flag_17_1`: a pack can satisfy every structural
-field of 17(3) and still be **thin** against 17(1)'s clear-and-specific standard.
-The engine flags this; it cannot resolve it. That gap is the dissertation's
-central argument.
+The block carries `quality_flag_17_4`. A pack can satisfy every minimum content
+requirement in 17(3) and still fail the 17(4) standard, which asks for a
+statement that is clear, easily comprehensible and as precise as reasonably
+possible in the circumstances. The engine marks a statement `specific`, `thin` or
+`informational` by counting the facts it relied on, which is a structural proxy
+for a question about quality. It flags the gap; it cannot close it. That gap is
+the dissertation's central argument.
 
-### Example 2 — GDPR Art 22 (automated decisions)
+### GDPR Art 22, automated decisions
 
 | Stage | Content |
 |---|---|
-| Norm | GDPR Art 22: no solely automated decision with significant effect; human intervention available |
+| Norm | Art 22(1): no decision based solely on automated processing with significant effect. Art 22(3): human intervention obtainable |
 | Obligation | Contested-ownership outcomes are significant for the affected artist |
-| Control objective | Never let a contested submission pass on automation alone |
-| System rule | `RULE_OWNERSHIP_CONFLICT` adds risk weight **and** forces human review; `RULE_HUMAN_REVIEW_ROUTING` records the routing |
-| Evidence output | `human_review_required` flag + `oversight_pathway` in every affected pack |
+| Control objective | Never let a contested submission reach an outcome on automation alone |
+| System rule | `RULE_OWNERSHIP_CONFLICT` adds risk weight **and** forces `REVIEW`; `RULE_HUMAN_REVIEW_ROUTING` records the routing |
+| Evidence output | `decision_outcome`, `solely_automated` and `intervention_point` in every pack |
 
 ## What the engine deliberately does not do
 
-- No Allow / Review / Quarantine / Reject. Ever.
-- No legal-ground determination (DSA 17(3)(d)) — that is legal characterisation,
-  left `null` with a note, by design.
-- No real data, no ML, no PKI (SHA-256 only), no platform integrations.
+Each of these is a decision, not a gap.
 
-Where a norm resists mechanisation, the code says so (`norms.yaml →
-mechanisability`) — those honest failures feed the dissertation's critique
-chapter; they are findings, not bugs.
+- **No legal-ground determination** (Art 17(3)(d)). That subparagraph wants the
+  ground *and an explanation of why the content is illegal on it*. That is legal
+  characterisation, not rule evaluation. The field is left `null` with a note
+  rather than filled with something that would read like a legal conclusion.
+- **No detection.** No fingerprinting, no audio analysis, no ML. Building it
+  would move the argument onto detection quality, which is a different question
+  and not the one this project asks.
+- **No real data.** Synthetic records only, so no personal data is processed and
+  no ethical approval is engaged.
+- **SHA-256, not PKI.** Integrity is what the legal argument needs. A hash proves
+  the record has not been altered. It does not prove who wrote it, which would
+  need signing keys and a key-management story the argument does not turn on.
+- **No platform integrations.** Where the engine would sit in a real ingestion
+  pipeline is an architecture question, and the controller/processor analysis
+  does not turn on the answer.
+
+Where a norm resists mechanisation the code says so, in
+`norms.yaml -> mechanisability`. Those are findings, not bugs, and they feed the
+critique chapter.
 
 ## Repo status
 
-`norms.yaml`: all 8 records carry completed doctrinal analysis — obligation,
-applicability to upload-time triage, mechanisability verdict (what the code can
-and cannot do), and a critique hook. DSA Art 17 is verified against the OJ text;
-the other 7 are `drafted` pending that re-verification.
+`norms.yaml`: all 8 records carry completed doctrinal analysis, being the
+obligation, its application to upload-time triage, a mechanisability verdict and
+a critique hook. DSA Arts 14, 17 and 20 and AI Act Art 14 are verified against
+the OJ text. GDPR Arts 5, 22 and 24 and AI Act Art 13 are drafted and awaiting
+that check.

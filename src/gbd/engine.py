@@ -1,13 +1,21 @@
-"""Decision Logic Layer — pure, deterministic confidence-scoring evaluator (DEC-1..5).
+"""Decision Logic Layer — pure, deterministic evaluator (DEC-1..5).
 
-Semantics (documented in README §3 and the policy bundle header):
+Semantics (documented in README and the policy bundle header):
   R                 = sum of confidence_weight over triggered risk rules, clamped to 1.0
   risk_direction    = "concerns_identified" if R >= 0.5 else "no_concerns_identified"
-  confidence_score  = |1 - 2R|   — confidence in the assessment, not a verdict
+  confidence_score  = |1 - 2R|   — confidence in the assessment, not in the outcome
   confidence_band   = from policy thresholds (High / Medium / Low / Human-Review-Required)
+  decision_outcome  = ALLOW / REVIEW / QUARANTINE / REJECT, from policy thresholds on R
 
-There is no Allow/Reject anywhere. A confident concern is still evidence for a
-human or downstream deployer decision, never an adjudication (the boundary thesis).
+Outcome and confidence are separate axes. The outcome is the bounded workflow
+step; the confidence score is how sure the system is about the assessment behind
+it. A REJECT at 0.95 confidence is still not a legal determination — the
+statement of reasons carries no legal_ground, and that is the boundary thesis.
+
+Which outcomes may be reached on automation alone is not decided here. It is read
+from the bundle (`gated_outcomes`), because it is a legal question under GDPR Art
+22 and therefore has to be a versioned, auditable control rather than a constant
+in code.
 
 Pure function: no I/O, no clock, no randomness, no database (DEC-5).
 """
@@ -21,6 +29,20 @@ from gbd.policy import PolicyBundle
 
 HUMAN_REVIEW = "Human-Review-Required"
 BAND_ORDER = [("high", "High"), ("medium", "Medium"), ("low", "Low")]
+
+ALLOW, REVIEW, QUARANTINE, REJECT = "ALLOW", "REVIEW", "QUARANTINE", "REJECT"
+OUTCOME_ORDER = [("reject", REJECT), ("quarantine", QUARANTINE), ("review", REVIEW)]
+
+# Where the human sits relative to the decision taking effect. This is the
+# operative distinction under GDPR Art 22: 22(1) bites on decisions taken solely
+# by automated means, while 22(3) is satisfied by intervention obtainable after
+# the fact. See norms.yaml -> GDPR_22.
+INTERVENTION = {
+    ALLOW: "none_no_adverse_effect",
+    REVIEW: "before_decision_takes_effect",
+    QUARANTINE: "after_decision_via_oversight_pathway",
+    REJECT: "after_decision_via_oversight_pathway",
+}
 
 
 def _get_field(record: dict[str, Any], dotted: str) -> Any:
@@ -74,6 +96,18 @@ def band_for(score: float, bands: dict[str, float]) -> str:
     return HUMAN_REVIEW
 
 
+def outcome_for(risk: float, outcomes: dict[str, float]) -> str:
+    """Map accumulated risk to a bounded workflow outcome (proposal §2).
+
+    Thresholds live in the policy bundle, not here, so that a change of outcome
+    boundary is a versioned policy event with an effective date.
+    """
+    for key, label in OUTCOME_ORDER:
+        if risk >= outcomes[key]:
+            return label
+    return ALLOW
+
+
 _CATEGORY_RULES: dict[str, str] = {
     "RULE_OWNERSHIP_CONFLICT": "multiple_ownership_claims",
     "RULE_FINGERPRINT_PARTIAL": "fingerprint_match_partial",
@@ -88,8 +122,11 @@ _CATEGORY_RULES: dict[str, str] = {
 class EvaluationResult:
     confidence_score: float
     confidence_band: str
+    decision_outcome: str                 # ALLOW / REVIEW / QUARANTINE / REJECT
     risk_direction: str
     human_review_required: bool
+    solely_automated: bool                # GDPR Art 22(1)
+    intervention_point: str               # GDPR Art 22(3)
     triggered_rules: list[dict[str, str]]
     input_categories: list[str]           # categorical only — no raw personal data
     facts_relied_on: list[str]            # DSA Art 17(3)(b)
@@ -119,12 +156,24 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
     direction = "concerns_identified" if risk >= 0.5 else "no_concerns_identified"
     score = round(abs(1.0 - 2.0 * risk), 3)
     band = band_for(score, bundle.bands)
-    human_review = forces_review or band == HUMAN_REVIEW
+
+    # Phase 1b — bounded workflow outcome. A rule carrying forces_human_review
+    # overrides the threshold and routes to REVIEW whatever the score says:
+    # contested ownership is significant for the affected artist regardless of
+    # how confident the system happens to be (norms.yaml -> GDPR_22).
+    decision_outcome = REVIEW if forces_review else outcome_for(risk, bundle.outcomes)
+    human_review = decision_outcome in bundle.gated_outcomes
     if human_review:
         band = HUMAN_REVIEW
+    intervention_point = INTERVENTION[decision_outcome]
 
     # Phase 2 — disclosure rules (weight 0) against the outcome
-    outcome = {"human_review_required": human_review, "band": band, "risk_direction": direction}
+    outcome = {
+        "human_review_required": human_review,
+        "band": band,
+        "risk_direction": direction,
+        "decision_outcome": decision_outcome,
+    }
     regulatory_mapping: dict[str, Any] = {}
     for rule in disclosure_rules:
         subject = outcome if rule["condition"]["type"] == "outcome" else record
@@ -137,20 +186,21 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
             for article in rule["articles"]:
                 regulatory_mapping.setdefault(article, {"rule_id": rule["rule_id"], "status": "evidenced"})
 
-    # Statement of reasons (DSA Art 17(3)) with the 17(1) quality flag
+    # Statement of reasons (DSA Art 17(3)) with the 17(4) quality flag
     concerns = direction == "concerns_identified" or human_review
     quality = "informational" if not concerns else ("specific" if len(facts) >= 2 else "thin")
     statement = {
-        "action_context": (
-            "routed_to_human_review" if human_review
-            else ("flagged_with_concerns" if concerns else "no_restriction_indicated")
-        ),                                                    # 17(3)(a) context
+        "action_taken": decision_outcome,                     # 17(3)(a)
+        "action_scope": "submission-level; no duration set by this system",   # 17(3)(a)
         "facts_relied_on": list(facts),                       # 17(3)(b)
+        "trigger_source": "own_initiative_upload_screening",  # 17(3)(b) — not an Art 16 notice
         "automated_means_used": True,                         # 17(3)(c) — unconditional
-        "legal_ground": None,                                 # 17(3)(d) — requires legal characterisation; deliberately not mechanised
+        "solely_automated": not human_review,                 # 17(3)(c) / GDPR Art 22(1)
+        "intervention_point": intervention_point,             # GDPR Art 22(3)
+        "legal_ground": None,                                 # 17(3)(d) — requires a legal characterisation AND an explanation of why the content is illegal on that ground; deliberately not mechanised
         "contractual_ground": "distributor terms: metadata, ownership and originality requirements",  # 17(3)(e)
         "redress": bundle.oversight_pathway,                  # 17(3)(f)
-        "quality_flag_17_1": quality,                         # form vs sufficiency (boundary thesis)
+        "quality_flag_17_4": quality,                         # form vs sufficiency (boundary thesis)
     }
 
     # Input categories (EP schema: categorical descriptors, never raw data)
@@ -163,8 +213,11 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
     return EvaluationResult(
         confidence_score=score,
         confidence_band=band,
+        decision_outcome=decision_outcome,
         risk_direction=direction,
         human_review_required=human_review,
+        solely_automated=not human_review,
+        intervention_point=intervention_point,
         triggered_rules=triggered,
         input_categories=categories,
         facts_relied_on=facts,
