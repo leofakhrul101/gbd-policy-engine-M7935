@@ -83,6 +83,7 @@ chapter; they are findings, not bugs.
 
 ## Repo status
 
-`norms.yaml`: DSA Art 17 is complete and verified. The other 7 records are
-DRAFT scaffolds pending the author's doctrinal analysis; every article
-reference is re-verified against the OJ text before submission.
+`norms.yaml`: all 8 records carry completed doctrinal analysis — obligation,
+applicability to upload-time triage, mechanisability verdict (what the code can
+and cannot do), and a critique hook. DSA Art 17 is verified against the OJ text;
+the other 7 are `drafted` pending that re-verification.
