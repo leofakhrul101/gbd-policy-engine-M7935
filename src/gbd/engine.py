@@ -127,27 +127,54 @@ class EvaluationResult:
     human_review_required: bool
     solely_automated: bool                # GDPR Art 22(1)
     intervention_point: str               # GDPR Art 22(3)
-    triggered_rules: list[dict[str, str]]
+    triggered_rules: list[dict[str, Any]]
     input_categories: list[str]           # categorical only — no raw personal data
     facts_relied_on: list[str]            # DSA Art 17(3)(b)
     regulatory_mapping: dict[str, Any]
     statement_of_reasons: dict[str, Any] = field(default_factory=dict)
 
 
-def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
-    """Evaluate one submission record against a policy bundle. Pure and replayable."""
+def evaluate(
+    record: dict[str, Any],
+    bundle: PolicyBundle,
+    trigger_source: str = "own_initiative_upload_screening",
+    notice_ref: str | None = None,
+) -> EvaluationResult:
+    """Evaluate one submission record against a policy bundle. Pure and replayable.
+
+    v0.2: `trigger_source` distinguishes own-initiative screening from an Art 16
+    notice (DSA Art 17(3)(b)); a notice against a prior ALLOW re-enters here with
+    trigger_source="article_16_notice" and the notice reference. `notice_ref` is
+    recorded in the statement of reasons, never evaluated as a signal.
+    """
     risk_rules = [r for r in bundle.rules if r["confidence_weight"] > 0]
     disclosure_rules = [r for r in bundle.rules if r["confidence_weight"] == 0]
 
+    # Phase 0 (v0.2) — safe state. If a required input signal is absent, the
+    # engine must not decide on partial evidence: silence would under-count risk
+    # and produce a confident ALLOW from missing data. Route to REVIEW instead
+    # (AI Act Art 14(4)(e), recital 73: in-built operational constraints).
+    missing_signals = [s for s in bundle.required_signals if _get_field(record, s) is None]
+    safe_state = bool(missing_signals)
+
     # Phase 1 — risk rules, in bundle order (deterministic, DEC-2)
-    triggered: list[dict[str, str]] = []
+    triggered: list[dict[str, Any]] = []
     facts: list[str] = []
     risk = 0.0
     forces_review = False
     for rule in risk_rules:
         if _condition_met(rule["condition"], record):
             risk += rule["confidence_weight"]
-            triggered.append({"rule_id": rule["rule_id"], "description": rule["description"]})
+            triggered.append({
+                "rule_id": rule["rule_id"],
+                "description": rule["description"],
+                "reason_code": rule.get("reason_code"),
+                # v0.2 — the rule-to-norm link travels inside the sealed record
+                # (DSA Art 17(3)(d)/(e); a side mapping table would be
+                # compliance by document, which this artefact argues against).
+                "norm_refs": list(rule.get("norm_refs", [])),
+                "articles": list(rule.get("articles", [])),
+            })
             if rule["rule_id"] in _CATEGORY_RULES:
                 facts.append(_CATEGORY_RULES[rule["rule_id"]])
             forces_review = forces_review or bool(rule.get("forces_human_review"))
@@ -161,7 +188,8 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
     # overrides the threshold and routes to REVIEW whatever the score says:
     # contested ownership is significant for the affected artist regardless of
     # how confident the system happens to be (norms.yaml -> GDPR_22).
-    decision_outcome = REVIEW if forces_review else outcome_for(risk, bundle.outcomes)
+    # v0.2: a missing required signal likewise forces REVIEW (safe state).
+    decision_outcome = REVIEW if (forces_review or safe_state) else outcome_for(risk, bundle.outcomes)
     human_review = decision_outcome in bundle.gated_outcomes
     if human_review:
         band = HUMAN_REVIEW
@@ -178,7 +206,13 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
     for rule in disclosure_rules:
         subject = outcome if rule["condition"]["type"] == "outcome" else record
         if _condition_met(rule["condition"], subject):
-            triggered.append({"rule_id": rule["rule_id"], "description": rule["description"]})
+            triggered.append({
+                "rule_id": rule["rule_id"],
+                "description": rule["description"],
+                "reason_code": rule.get("reason_code"),
+                "norm_refs": list(rule.get("norm_refs", [])),
+                "articles": list(rule.get("articles", [])),
+            })
             for article in rule["articles"]:
                 regulatory_mapping[article] = {"rule_id": rule["rule_id"], "status": "evidenced"}
     for rule in risk_rules:  # risk rules that fired also evidence their articles
@@ -193,8 +227,17 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
         "action_taken": decision_outcome,                     # 17(3)(a)
         "action_scope": "submission-level; no duration set by this system",   # 17(3)(a)
         "facts_relied_on": list(facts),                       # 17(3)(b)
-        "trigger_source": "own_initiative_upload_screening",  # 17(3)(b) — not an Art 16 notice
+        "trigger_source": trigger_source,                     # 17(3)(b) — notice vs own-initiative
+        "notice_ref": notice_ref,                             # 17(3)(b) — Art 16 notice reference, if any
         "automated_means_used": True,                         # 17(3)(c) — unconditional
+        # v0.2 — 17(3)(c) names two facts, and the Commission schema separates
+        # them (automated_detection / automated_decision). Detection here means
+        # the upstream signals (fingerprint scores etc), which this artefact
+        # takes as automated inputs; the decision is the engine's own step.
+        "automated_detection": True,                          # 17(3)(c), first limb
+        "automated_decision": "not_fully_automated" if human_review else "fully_automated",  # 17(3)(c), second limb
+        "safe_state": safe_state,                             # AI Act Art 14(4)(e)
+        "missing_signals": list(missing_signals),
         "solely_automated": not human_review,                 # 17(3)(c) / GDPR Art 22(1)
         "intervention_point": intervention_point,             # GDPR Art 22(3)
         "legal_ground": None,                                 # 17(3)(d) — requires a legal characterisation AND an explanation of why the content is illegal on that ground; deliberately not mechanised
@@ -207,6 +250,8 @@ def evaluate(record: dict[str, Any], bundle: PolicyBundle) -> EvaluationResult:
     categories = list(facts)
     if record.get("metadata_complete") is False:
         categories.append("metadata_incomplete")
+    for s in missing_signals:                       # v0.2 — safe state is a recorded fact
+        categories.append(f"signal_unavailable:{s}")
     if not categories:
         categories.append("no_risk_signals_detected")
 

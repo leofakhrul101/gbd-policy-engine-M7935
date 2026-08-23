@@ -28,7 +28,7 @@ def test_ambiguous_routes_to_human(bundle, slice_records):
 def test_thin_reasons_flagged(bundle, slice_records):
     r = evaluate(slice_records["thin_reasons"], bundle)
     assert r.confidence_band == "Medium"
-    assert r.statement_of_reasons["quality_flag_17_1"] in ("thin", "informational")
+    assert r.statement_of_reasons["quality_flag_17_4"] in ("thin", "informational")
     # exactly one weak signal -> structurally complete but thin against 17(1)
     assert len(r.facts_relied_on) == 1
 

@@ -37,6 +37,21 @@
       "type": "array",
       "items": { "enum": ["ALLOW", "REVIEW", "QUARANTINE", "REJECT"] }
     },
+    "required_signals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "v0.2 — input fields that must be present; if any is missing the engine enters its safe state and routes to REVIEW (AI Act Art 14(4)(e), recital 73)."
+    },
+    "approval": {
+      "type": "object",
+      "required": ["approved_by", "approved_at"],
+      "properties": {
+        "approved_by": { "type": "string", "minLength": 1 },
+        "approved_at": { "type": "string" },
+        "role": { "type": "string" }
+      },
+      "description": "v0.2 — controller sign-off of this policy version (EDPB Guidelines 07/2020 paras 84, 116, 118; GDPR Art 28(3)(a))."
+    },
     "rules": {
       "type": "array",
       "minItems": 6,

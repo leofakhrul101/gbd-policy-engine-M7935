@@ -42,7 +42,7 @@ def test_oversight_pathway_referenced(bundle, slice_records):
 def test_statement_of_reasons_block(bundle, slice_records):
     pack = build_pack(evaluate(slice_records["thin_reasons"], bundle), bundle, timestamp=TS)
     sor = pack["regulatory_mapping"]["DSA Art 17 — statement of reasons"]
-    for key in ("action_context", "facts_relied_on", "automated_means_used", "redress", "quality_flag_17_1"):
+    for key in ("action_taken", "facts_relied_on", "automated_means_used", "redress", "quality_flag_17_4"):
         assert key in sor  # 17(3) structural completeness
     assert sor["automated_means_used"] is True  # 17(3)(c)
 

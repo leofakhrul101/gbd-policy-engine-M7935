@@ -37,6 +37,18 @@ CREATE TRIGGER IF NOT EXISTS no_update_packs BEFORE UPDATE ON evidence_packs
 BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS no_delete_packs BEFORE DELETE ON evidence_packs
 BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END;
+CREATE TABLE IF NOT EXISTS review_events (
+    review_id      TEXT PRIMARY KEY,
+    pack_id        TEXT NOT NULL REFERENCES evidence_packs(pack_id),
+    reviewer_id    TEXT NOT NULL,
+    agreement      TEXT NOT NULL,
+    created_at     TEXT NOT NULL,
+    review_json    TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS no_update_reviews BEFORE UPDATE ON review_events
+BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END;
+CREATE TRIGGER IF NOT EXISTS no_delete_reviews BEFORE DELETE ON review_events
+BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END;
 """
 
 
@@ -79,6 +91,27 @@ class AuditLog:
         if row is None:
             raise KeyError(f"no Evidence Pack: {pack_id}")
         return json.loads(row[0])
+
+    # ── v0.2: review events (GDPR Art 22(3); DSA Art 20(6); AI Act Art 14) ──
+    def record_review(self, review: dict[str, Any]) -> None:
+        self._conn.execute(
+            "INSERT INTO review_events VALUES (?, ?, ?, ?, ?, ?)",
+            (review["review_id"], review["pack_id"], review["reviewer_id"],
+             review["agreement"], review["review_timestamp"], json.dumps(review)),
+        )
+        self._conn.commit()
+
+    def reviews_for(self, pack_id: str) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT review_json FROM review_events WHERE pack_id = ? ORDER BY created_at",
+            (pack_id,),
+        ).fetchall()
+        return [json.loads(r[0]) for r in rows]
+
+    def all_reviews(self) -> list[dict[str, Any]]:
+        rows = self._conn.execute(
+            "SELECT review_json FROM review_events ORDER BY created_at").fetchall()
+        return [json.loads(r[0]) for r in rows]
 
     def list_decisions(self) -> list[tuple[str, str, str]]:
         return list(self._conn.execute(
