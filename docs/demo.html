@@ -143,14 +143,14 @@ footer code{font-family:var(--mono);font-size:11px}
 <div class="wrap">
 
 <header class="masthead">
-  <p class="eyebrow">gbd-policy-engine · v0.2.1</p>
+  <p class="eyebrow">gbd-policy-engine · v0.2.3</p>
   <h1>Evidence Pack Workbench</h1>
   <p>The demonstration artefact for M7935, running in your browser. Move the signals a distributor
      already holds about an upload, and watch a decision form, seal itself into a record, pass
      through blind-first human review, and project onto the European Commission's
      statement-of-reasons schema.</p>
   <div class="meta">
-    <span><b>policy</b> v0.2.0</span><span><b>tests</b> 52 passing</span>
+    <span><b>policy</b> v0.2.0</span><span><b>tests</b> 53 passing</span>
     <span><b>pack schema</b> 14 fields</span><span><b>rules</b> 9 · 6 risk-bearing</span>
     <span><b>norms</b> GDPR 5·22·24 · AI Act 13·14 · DSA 14·17·20</span>
   </div>
@@ -301,10 +301,10 @@ footer code{font-family:var(--mono);font-size:11px}
 </section>
 
 <footer>
-  <p><b>What this page is.</b> A faithful browser port of <code>gbd-policy-engine</code> v0.2.1 —
+  <p><b>What this page is.</b> A faithful browser port of <code>gbd-policy-engine</code> v0.2.3 —
      the same nine rules from <code>policies/v0.2.0.yaml</code>, the same evaluation order, the same
      canonical-JSON hashing. It was checked field-for-field and hash-for-hash against the Python
-     implementation across 576 signal combinations; all 576 matched, including the SHA-256 digests
+     implementation across 1,152 signal combinations; all 1,152 matched, including the SHA-256 digests
      and the UUIDv5 pack identifiers shown above. Nothing here is a mock-up of the engine's output.</p>
   <p><b>What it is not.</b> Synthetic signals, uncalibrated thresholds, and a single-operator log.
      The artefact records how a decision was reached; it does not make the decision correct.</p>
@@ -361,10 +361,10 @@ function sha1Bytes(bytes){let H=[0x67452301,0xefcdab89,0x98badcfe,0x10325476,0xc
 
 const SHA = { sha256, sha1Bytes, utf8 };
 
-/* ── gbd-policy-engine v0.2.1, ported for the browser ── */
-// Faithful browser port of gbd-policy-engine v0.2.1.
+/* ── gbd-policy-engine v0.2.3, ported for the browser ── */
+// Faithful browser port of gbd-policy-engine v0.2.3.
 // Verified field-for-field, hash-for-hash, against the Python implementation
-// over 576 signal combinations. See verify.js.
+// over 1,152 signal combinations, 396 of which exercise the safe state.
 
 
 
@@ -378,6 +378,8 @@ const BUNDLE = {
   adverse_outcomes: ["REVIEW", "QUARANTINE", "REJECT"],
   gated_outcomes: ["REVIEW"],
   required_signals: ["fingerprint_match_score", "ownership_claims"],
+  // DSA Art 17(4): the route to redress, in words the recipient can act on.
+  oversight_pathway_label: "the 'Query this decision' link on the release in your dashboard",
   approval: { approved_by: "distributor-demo", approved_at: "2026-08-22T00:00:00Z",
               role: "controller sign-off (EDPB 07/2020 para 84; GDPR Art 28(3)(a))" },
   rules: [
@@ -567,25 +569,40 @@ const FACT_PHRASES = {
   prior_takedowns_present: "the uploading account has previous takedowns",
   ai_generated_undisclosed: "the track appears to be AI-generated but was not disclosed as such",
 };
+// Two registers, one decision (explainer.py). The recipient gets words; the machine
+// references are gathered into one labelled line at the end. DSA Art 17(4).
+function route() {
+  return BUNDLE.oversight_pathway_label || BUNDLE.oversight_pathway;
+}
 function plainEnglish(r) {
   const p = [OUTCOME_PHRASES[r.decision_outcome]];
-  p.push(`The decision was made by an automated system using policy version ${BUNDLE.policy_version}. `
-       + `The system's confidence in the assessment behind it is ${r.confidence_score.toFixed(3)} `
-       + `(${r.confidence_band}).`);
+  p.push("This decision was made by automated means \u2014 software applying our "
+       + "published rules \u2014 and no person had looked at it when it was made.");
+  const missing = (r.statement_of_reasons && r.statement_of_reasons.missing_signals) || [];
   if (r.facts_relied_on.length)
     p.push("The assessment relied on the following observations: "
          + r.facts_relied_on.map(f => FACT_PHRASES[f] || f.replace(/_/g, " ")).join("; ") + ".");
+  else if (missing.length)
+    // Safe state (AI Act Art 14(4)(e)). "Nothing was detected" would be false here:
+    // the checks did not run. Art 17(4) asks for a statement the recipient can act on.
+    p.push("The automated checks did not run on this submission, because the "
+         + "information they need was not available. Nothing has been found "
+         + "against your release.");
   else p.push("No risk signals were detected in this submission.");
   if (r.human_review_required)
-    p.push(`A person will look at this before it takes effect. You can also contest it or ask `
-         + `about it via: ${BUNDLE.oversight_pathway}.`);
+    p.push(`A person will look at this before anything takes effect. You can also tell us `
+         + `why you think it is wrong, using ${route()}.`);
   else if (BUNDLE.adverse_outcomes.includes(r.decision_outcome))
-    p.push(`This decision was taken by automated means without a person reviewing it first. You `
-         + `have the right to ask for a person to look at it, to give your side, and to challenge `
-         + `the decision, via: ${BUNDLE.oversight_pathway}.`);
-  else p.push(`You can contest this outcome via: ${BUNDLE.oversight_pathway}.`);
-  p.push("This record is a readiness signal produced by compliance-support software. "
-       + "It is not a legal determination and does not constitute legal advice.");
+    p.push(`No person reviewed this before it took effect. You can ask for a person to look `
+         + `at it, give your side, and challenge it, using ${route()}.`);
+  else p.push(`If you think this is wrong, you can tell us using ${route()}.`);
+  p.push("This is a check on how your release was handled. It is not a legal determination that "
+       + "anything is illegal, and it is not legal advice.");
+  p.push(`Reference, if you contact us or if this decision is audited: policy version `
+       + `${BUNDLE.policy_version}, `
+       + (missing.length ? "assessment confidence not established \u2014 checks incomplete"
+                         : `assessment confidence ${r.confidence_score.toFixed(3)} (${r.confidence_band})`)
+       + `, redress scheme ${BUNDLE.oversight_pathway}.`);
   return p.join(" ");
 }
 

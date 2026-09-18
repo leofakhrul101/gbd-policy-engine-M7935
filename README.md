@@ -13,7 +13,7 @@ writes one regulator-legible record for every decision it makes.
 
 ```bash
 pip install -e ".[dev,demo]"
-pytest                      # 52 tests; each v0.2 test names the legal finding it operationalises
+pytest                      # 53 tests; each v0.2 test names the legal finding it operationalises
 streamlit run demo/app.py   # 6-step supervisor walkthrough
 ```
 
@@ -24,7 +24,7 @@ Evidence Pack with its SHA-256 digest, blind-first review, and the Commission ex
 "tamper" control alters one character of the record so you can watch the seal fail.
 
 That port was checked field-for-field and hash-for-hash against this Python implementation
-across 576 signal combinations; all 576 matched, including the digests and the UUIDv5 pack
+across 1,152 signal combinations; all 1,152 matched, including the digests and the UUIDv5 pack
 identifiers. It is the same engine, not an illustration of it.
 
 `docs/walkthrough.html` is the earlier v0.1.0 walkthrough, kept as the *before* exhibit.

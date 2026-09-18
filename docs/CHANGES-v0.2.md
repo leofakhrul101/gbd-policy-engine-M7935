@@ -169,3 +169,36 @@ Also in this release, so that what a reviewer opens matches what the dissertatio
 - `LICENSE.md` added: all rights reserved, with an express grant for assessment.
 
 Tests: 52, all passing.
+
+## v0.2.3 — 18 September 2026: two things the record was saying that were not true
+
+**The safe state was reported to the artist as a clean result.** A submission arriving without a
+required signal is routed to REVIEW and never assessed — that is the v0.2 safe state, and the
+sealed pack records it correctly as `signal_unavailable:fingerprint_match_score` with
+`safe_state: true`. The recipient-facing sentence, however, read "No risk signals were detected
+in this submission", and the reference line reported an assessment confidence of 1.000. Both are
+artefacts of the arithmetic: no rule fired, so accumulated risk *R* is zero and |1 − 2R| is one.
+Neither is true of what happened. "We checked and found nothing" and "we could not check" are
+different facts, and under Article 17(4) they are different things for a recipient to act on; a
+confidence figure printed beside an assessment that never ran reads as certainty about the very
+thing the engine declined to decide. The recipient-facing text now says the checks did not run
+and why, and withholds the figure. The sealed payload and the auditor-facing view are unchanged —
+they were already right. Test 15 holds the distinction: it asserts the sentence is absent in the
+safe state and still present on the clean path, so the two registers cannot drift apart again by
+accident.
+
+**The browser port had silently diverged from the implementation.** `docs/demo.html` still
+carried the pre-v0.2.2 single-register explanation. Because `plain_english_explanation` sits
+inside the hashed payload, the same record produced a different `integrity_hash` in the two
+implementations — 0 of 4 packs in the shipped slice agreed. A reviewer running the Python and
+opening the demo would have found two different seals on one decision, in an artefact whose
+claim is that the seal is reproducible. The explanation generator is now ported verbatim, and
+the port is re-verified at 1,152 signal combinations on `integrity_hash`, outcome and
+recipient-facing text, 396 of which exercise the safe state.
+
+The second finding is the first one's method turned on itself: the conformance test that the
+dissertation applies to the Commission's schema is the same test that caught this, one layer
+down. A generated artefact that is checked field-for-field against its specification will report
+its own regressions; one that is described in prose will not.
+
+Tests: 53, all passing.

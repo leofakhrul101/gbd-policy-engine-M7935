@@ -223,3 +223,30 @@ def test_export_carries_submission_reference(v02, risky_record):
     assert out["puid"] == pack["pack_id"]
     assert pack["submission_ref"] not in str(out), \
         "the submission reference stays internal; only the pack id is exported"
+
+
+# 15 — the safe state tells the recipient the truth. A submission routed to REVIEW
+#      because a required signal was unavailable must not be described to the artist
+#      as one where nothing was detected, and must not carry a confidence figure:
+#      DSA Art 17(4) requires the statement to be specific enough to act on, and
+#      "we could not check" is a different thing to act on than "we checked and
+#      found nothing". AI Act Art 13(1) on interpretable output points the same way.
+def test_safe_state_is_not_reported_as_a_clean_result(v02, clean_record):
+    blind = {k: v for k, v in clean_record.items() if k not in v02.required_signals}
+    r = evaluate(blind, v02)
+    assert r.decision_outcome == REVIEW
+    assert r.statement_of_reasons["safe_state"] is True
+    assert not r.facts_relied_on
+
+    text = build_pack(r, v02, timestamp=TS)["plain_english_explanation"]
+    assert "No risk signals were detected" not in text, \
+        "the checks did not run; saying nothing was detected asserts a result never reached"
+    assert "did not run" in text
+    assert f"{r.confidence_score:.3f}" not in text, \
+        "a confidence figure on an assessment that never completed reads as certainty"
+
+    # the clean path is untouched: there, the same sentence is true
+    clean = build_pack(evaluate(clean_record, v02), v02, timestamp=TS)
+    assert "No risk signals were detected" in clean["plain_english_explanation"]
+    assert f"{evaluate(clean_record, v02).confidence_score:.3f}" in \
+        clean["plain_english_explanation"]

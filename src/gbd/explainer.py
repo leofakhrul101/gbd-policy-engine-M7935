@@ -42,9 +42,18 @@ def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
     parts.append(_OUTCOME_PHRASES[result.decision_outcome])
     parts.append("This decision was made by automated means — software applying our "
                  "published rules — and no person had looked at it when it was made.")
+    missing = list(result.statement_of_reasons.get("missing_signals", []))
     if result.facts_relied_on:
         reasons = "; ".join(_FACT_PHRASES.get(f, f.replace("_", " ")) for f in result.facts_relied_on)
         parts.append(f"The assessment relied on the following observations: {reasons}.")
+    elif missing:
+        # Safe state (AI Act Art 14(4)(e)). Saying "nothing was detected" here would be
+        # false: the checks did not run. DSA Art 17(4) requires the statement to be
+        # specific enough for the recipient to act on, and "we could not check" is a
+        # different thing to act on than "we checked and found nothing".
+        parts.append("The automated checks did not run on this submission, because the "
+                     "information they need was not available. Nothing has been found "
+                     "against your release.")
     else:
         parts.append("No risk signals were detected in this submission.")
     if result.human_review_required:
@@ -65,7 +74,10 @@ def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
     )
     parts.append(
         f"Reference, if you contact us or if this decision is audited: policy version "
-        f"{bundle.policy_version}, assessment confidence {result.confidence_score:.3f} "
-        f"({result.confidence_band}), redress scheme {bundle.oversight_pathway}."
+        f"{bundle.policy_version}, "
+        + ("assessment confidence not established — checks incomplete"
+           if missing else
+           f"assessment confidence {result.confidence_score:.3f} ({result.confidence_band})")
+        + f", redress scheme {bundle.oversight_pathway}."
     )
     return " ".join(parts)
