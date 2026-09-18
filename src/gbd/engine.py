@@ -22,10 +22,25 @@ Pure function: no I/O, no clock, no randomness, no database (DEC-5).
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Any
 
 from gbd.policy import PolicyBundle
+
+# Salt for the pseudonymous submission reference (v0.2.1). DSA Art 24(5) bars
+# personal data from the transparency submission and the Evidence Pack carries
+# only categorical descriptors, so the pack must be able to name the submission
+# it decides WITHOUT disclosing it. A salted digest does both: the controller
+# can resolve it against their own catalogue, nobody else can. In production the
+# salt is a per-controller secret; a fixed demo value keeps the tests replayable.
+SUBMISSION_SALT = "gbd-demo-salt-v0.2.1"
+
+
+def submission_ref(record: dict[str, Any], salt: str = SUBMISSION_SALT) -> str:
+    """Pseudonymous, stable reference to the submission under decision."""
+    raw = f"{salt}|{record.get('record_id', '')}".encode()
+    return hashlib.sha256(raw).hexdigest()[:32]
 
 HUMAN_REVIEW = "Human-Review-Required"
 BAND_ORDER = [("high", "High"), ("medium", "Medium"), ("low", "Low")]
@@ -108,6 +123,9 @@ def outcome_for(risk: float, outcomes: dict[str, float]) -> str:
     return ALLOW
 
 
+# The six risk-bearing dimensions, in bundle order. Public because the review
+# surface must be able to show the reviewer every dimension considered — not
+# only the ones that fired (audit A2).
 _CATEGORY_RULES: dict[str, str] = {
     "RULE_OWNERSHIP_CONFLICT": "multiple_ownership_claims",
     "RULE_FINGERPRINT_PARTIAL": "fingerprint_match_partial",
@@ -118,8 +136,12 @@ _CATEGORY_RULES: dict[str, str] = {
 }
 
 
+RISK_DIMENSIONS: list[tuple[str, str]] = list(_CATEGORY_RULES.items())
+
+
 @dataclass(frozen=True)
 class EvaluationResult:
+    submission_ref: str                   # pseudonymous handle on the submission
     confidence_score: float
     confidence_band: str
     decision_outcome: str                 # ALLOW / REVIEW / QUARANTINE / REJECT
@@ -139,6 +161,7 @@ def evaluate(
     bundle: PolicyBundle,
     trigger_source: str = "own_initiative_upload_screening",
     notice_ref: str | None = None,
+    supersedes_pack_id: str | None = None,
 ) -> EvaluationResult:
     """Evaluate one submission record against a policy bundle. Pure and replayable.
 
@@ -229,6 +252,7 @@ def evaluate(
         "facts_relied_on": list(facts),                       # 17(3)(b)
         "trigger_source": trigger_source,                     # 17(3)(b) — notice vs own-initiative
         "notice_ref": notice_ref,                             # 17(3)(b) — Art 16 notice reference, if any
+        "supersedes_pack_id": supersedes_pack_id,             # v0.2.1 — links a re-entry to the decision it re-opens
         "automated_means_used": True,                         # 17(3)(c) — unconditional
         # v0.2 — 17(3)(c) names two facts, and the Commission schema separates
         # them (automated_detection / automated_decision). Detection here means
@@ -256,6 +280,7 @@ def evaluate(
         categories.append("no_risk_signals_detected")
 
     return EvaluationResult(
+        submission_ref=submission_ref(record),
         confidence_score=score,
         confidence_band=band,
         decision_outcome=decision_outcome,

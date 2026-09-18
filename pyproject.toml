@@ -1,6 +1,6 @@
 [project]
 name = "gbd-policy-engine"
-version = "0.1.0"
+version = "0.2.2"
 description = "Governance-by-Design Policy Engine — academic demonstration artefact for M7935 (LLM Law, Technology & Innovation, University of Strathclyde)"
 requires-python = ">=3.11"
 dependencies = [

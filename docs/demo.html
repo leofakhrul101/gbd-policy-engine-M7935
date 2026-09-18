@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Evidence Pack Workbench</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@1,8..60,400&display=swap">
+<style>
+:root{
+  --paper:#f6f7f7; --surface:#ffffff; --raise:#fbfcfc;
+  --ink:#14181b; --muted:#5d666c; --faint:#8b9298; --line:#dfe3e5; --line-soft:#eceff0;
+  --seal:#14505f; --seal-soft:#e0ebee; --seal-ink:#0e3b46;
+  --allow:#2d6a4a; --review:#14505f; --quarantine:#8a6516; --reject:#8d3a32;
+  --warn:#8a6516; --warn-soft:#f7efe3;
+  --ui:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0e1215; --surface:#161b1f; --raise:#1b2126;
+  --ink:#e6eaec; --muted:#9aa4aa; --faint:#6f7a81; --line:#283036; --line-soft:#1f262b;
+  --seal:#62b3c6; --seal-soft:#153840; --seal-ink:#8fcdda;
+  --allow:#63b088; --review:#62b3c6; --quarantine:#c99a45; --reject:#d2796f;
+  --warn:#c99a45; --warn-soft:#2a2118;
+}}
+:root[data-theme="dark"]{
+  --paper:#0e1215; --surface:#161b1f; --raise:#1b2126;
+  --ink:#e6eaec; --muted:#9aa4aa; --faint:#6f7a81; --line:#283036; --line-soft:#1f262b;
+  --seal:#62b3c6; --seal-soft:#153840; --seal-ink:#8fcdda;
+  --allow:#63b088; --review:#62b3c6; --quarantine:#c99a45; --reject:#d2796f;
+  --warn:#c99a45; --warn-soft:#2a2118;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--ui);line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px;padding-block:28px 56px}
+h1,h2,h3{text-wrap:balance;margin:0}
+a{color:var(--seal)}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+  font-weight:600}
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:8px}
+.masthead h1{font-size:clamp(25px,4.4vw,36px);font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.masthead p{color:var(--muted);max-width:66ch;margin:10px 0 0;font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-family:var(--mono);
+  font-size:11.5px;color:var(--faint)}
+.meta b{color:var(--muted);font-weight:500}
+.caveat{margin-top:16px;border-left:3px solid var(--warn);background:var(--warn-soft);
+  padding:10px 14px;font-size:12.5px;color:var(--ink);border-radius:0 4px 4px 0}
+.station{margin-top:40px}
+.station-head{display:flex;gap:12px;align-items:baseline;border-bottom:1px solid var(--line);
+  padding-bottom:8px;margin-bottom:18px}
+.station-num{font-family:var(--mono);font-size:12px;color:var(--seal);font-weight:500;
+  flex:0 0 auto;padding-top:2px}
+.station-head h2{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.station-head p{margin:3px 0 0;color:var(--muted);font-size:13px;max-width:70ch}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:22px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px}
+.panel + .panel{margin-top:14px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+button{font-family:var(--ui);font-size:13px;cursor:pointer;border-radius:4px;
+  border:1px solid var(--line);background:var(--raise);color:var(--ink);padding:6px 11px}
+button:hover{border-color:var(--seal)}
+button:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+button.on{background:var(--seal);border-color:var(--seal);color:#fff}
+button:disabled{opacity:.42;cursor:not-allowed;border-style:dashed}
+button:disabled:hover{border-color:var(--line)}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;
+  padding:9px 0;border-bottom:1px solid var(--line-soft)}
+.ctl:last-child{border-bottom:0}
+.ctl label{font-size:13px;font-weight:500}
+.ctl .hint{grid-column:1/-1;font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:-2px}
+.ctl .val{font-family:var(--mono);font-size:12.5px;color:var(--seal);font-weight:500;
+  font-variant-numeric:tabular-nums}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--seal);margin:2px 0 0}
+.ctl input[type=text]{grid-column:1/-1;width:100%;font-family:var(--mono);font-size:12.5px;
+  padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--raise);
+  color:var(--ink)}
+.seg{display:flex;gap:4px}
+.seg button{padding:4px 10px;font-size:12px}
+.dims{display:flex;flex-direction:column;gap:0}
+.dim{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.dim:last-child{border-bottom:0}
+.pip{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--faint);justify-self:center}
+.dim.fired .pip{background:var(--seal);border-color:var(--seal)}
+.dim .nm{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.dim.fired .nm{color:var(--ink)}
+.dim .w{font-family:var(--mono);font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.dim.fired .w{color:var(--seal);font-weight:500}
+.dim .refs{grid-column:2/-1;font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:1px}
+.rbar{position:relative;height:26px;border:1px solid var(--line);border-radius:3px;
+  background:var(--raise);overflow:hidden;margin:4px 0 6px}
+.rfill{position:absolute;inset:0 auto 0 0;background:var(--seal-soft);
+  border-right:2px solid var(--seal);transition:width .18s ease}
+.rtick{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.rlabels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;
+  color:var(--faint);font-variant-numeric:tabular-nums}
+.verdict{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin-top:14px}
+.vcard{flex:1 1 160px;border:1px solid var(--line);border-radius:5px;padding:11px 13px;
+  background:var(--raise)}
+.vcard .eyebrow{display:block;margin-bottom:5px}
+.vcard .big{font-family:var(--mono);font-size:19px;font-weight:500;letter-spacing:-.01em}
+.vcard .sub{font-size:11.5px;color:var(--muted);margin-top:3px}
+.vcard.outcome{border-left:4px solid var(--oc,var(--seal))}
+.vcard.outcome .big{color:var(--oc,var(--seal))}
+.note{margin-top:12px;border-left:3px solid var(--seal);background:var(--seal-soft);
+  padding:9px 13px;font-size:12.5px;border-radius:0 4px 4px 0}
+.note b{color:var(--seal-ink)}
+.quote{font-family:var(--serif);font-size:13.5px;color:var(--muted);margin:10px 0 0;
+  padding-left:12px;border-left:2px solid var(--line)}
+pre{font-family:var(--mono);font-size:11.5px;line-height:1.55;background:var(--raise);
+  border:1px solid var(--line);border-radius:5px;padding:13px;overflow-x:auto;margin:0;
+  color:var(--ink);max-height:420px;overflow-y:auto}
+.hashrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.hashrow code{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all;
+  flex:1 1 220px}
+.badge{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:3px;font-weight:500}
+.badge.ok{background:var(--seal-soft);color:var(--seal-ink)}
+.badge.bad{background:var(--warn-soft);color:var(--reject)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+.scroll{overflow-x:auto}
+th{text-align:left;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--faint);font-weight:600;padding:0 10px 7px 0;border-bottom:1px solid var(--ink)}
+td{padding:7px 10px 7px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+td.k{font-family:var(--mono);font-size:11.5px;color:var(--seal);white-space:nowrap}
+td.v{font-family:var(--mono);font-size:11.5px;word-break:break-word}
+tr.gap td{color:var(--warn);font-weight:600;font-family:var(--ui);font-size:12px}
+.rev-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.rev-grid{grid-template-columns:1fr}}
+.withheld{border:1px dashed var(--line);border-radius:5px;padding:14px;background:var(--raise);
+  color:var(--faint);font-size:12.5px;text-align:center}
+.withheld .lock{font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;display:block;margin-bottom:5px}
+footer{margin-top:52px;border-top:1px solid var(--line);padding-top:18px;font-size:12px;
+  color:var(--muted)}
+footer p{margin:0 0 7px;max-width:74ch}
+footer code{font-family:var(--mono);font-size:11px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">gbd-policy-engine · v0.2.1</p>
+  <h1>Evidence Pack Workbench</h1>
+  <p>The demonstration artefact for M7935, running in your browser. Move the signals a distributor
+     already holds about an upload, and watch a decision form, seal itself into a record, pass
+     through blind-first human review, and project onto the European Commission's
+     statement-of-reasons schema.</p>
+  <div class="meta">
+    <span><b>policy</b> v0.2.0</span><span><b>tests</b> 52 passing</span>
+    <span><b>pack schema</b> 14 fields</span><span><b>rules</b> 9 · 6 risk-bearing</span>
+    <span><b>norms</b> GDPR 5·22·24 · AI Act 13·14 · DSA 14·17·20</span>
+  </div>
+  <div class="caveat"><b>Synthetic data, and not legal advice.</b> Every signal below is invented.
+     The engine produces a readiness signal and a record of how it reached one; it does not
+     determine that anything is illegal, and nothing here is a legal determination.</div>
+</header>
+
+<section class="station">
+  <div class="station-head"><span class="station-num">01</span>
+    <div><h2>The submission</h2>
+      <p>What the distributor knows before any human looks. Detection is an input assumption — the
+         artefact never listens to audio; the legal question begins once the signals arrive.</p></div>
+  </div>
+  <div class="split">
+    <div>
+      <div class="panel">
+        <p class="eyebrow" style="margin-bottom:8px">Demonstration records</p>
+        <div class="presets" id="presets"></div>
+        <div class="ctl"><label for="rid">Submission identifier</label><span></span>
+          <input type="text" id="rid" value="trk-00417">
+          <span class="hint">never enters the pack — only a salted digest of it does</span></div>
+        <div class="ctl"><label for="claims">Ownership claimants</label>
+          <span class="val" id="claims-v">1</span>
+          <input type="range" id="claims" min="1" max="4" step="1" value="1">
+          <span class="hint">ownership_claims · more than one forces human review</span></div>
+        <div class="ctl"><label for="fp">Fingerprint match</label>
+          <span class="val" id="fp-v">0.05</span>
+          <input type="range" id="fp" min="0" max="1" step="0.01" value="0.05">
+          <span class="hint">fingerprint_match_score · 0.30–0.75 partial, ≥0.75 strong</span></div>
+        <div class="ctl"><label for="age">Account age, days</label>
+          <span class="val" id="age-v">400</span>
+          <input type="range" id="age" min="0" max="720" step="1" value="400">
+          <span class="hint">behavioural_signals.account_age_days · under 30 adds weight</span></div>
+        <div class="ctl"><label for="td">Prior takedowns</label>
+          <span class="val" id="td-v">0</span>
+          <input type="range" id="td" min="0" max="6" step="1" value="0">
+          <span class="hint">behavioural_signals.takedown_history</span></div>
+        <div class="ctl"><label>AI-generated</label>
+          <span class="seg"><button id="ai-no" class="on">no</button><button id="ai-yes">yes</button></span>
+          <span class="hint">ai_generated</span></div>
+        <div class="ctl"><label>Disclosed as AI</label>
+          <span class="seg"><button id="dis-no" class="on">no</button><button id="dis-yes">yes</button></span>
+          <span class="hint">ai_disclosed · undisclosed AI is a transparency defect, not a verdict</span></div>
+        <div class="ctl"><label>Metadata complete</label>
+          <span class="seg"><button id="md-yes" class="on">yes</button><button id="md-no">no</button></span>
+          <span class="hint">metadata_complete</span></div>
+        <div class="ctl"><label>Fingerprint service unavailable</label>
+          <span class="seg"><button id="miss-no" class="on">no</button><button id="miss-yes">yes</button></span>
+          <span class="hint">drops a required signal — watch the safe state fire</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <p class="eyebrow" style="margin-bottom:10px">Six risk dimensions, every one shown</p>
+        <div class="dims" id="dims"></div>
+        <p class="quote">A reviewer shown only the rules that fired cannot tell whether the engine
+           looked at the right things. The dimensions that stayed silent are evidence too.</p>
+      </div>
+      <div class="panel">
+        <p class="eyebrow" style="margin-bottom:8px">Accumulated risk R</p>
+        <div class="rbar"><div class="rfill" id="rfill"></div>
+          <div class="rtick" style="left:30%"></div><div class="rtick" style="left:50%"></div>
+          <div class="rtick" style="left:80%"></div></div>
+        <div class="rlabels"><span>0 · allow</span><span>0.3 review</span><span>0.5 quarantine</span>
+          <span>0.8 reject</span><span>1.0</span></div>
+        <div class="verdict">
+          <div class="vcard outcome" id="oc-card"><span class="eyebrow">Outcome</span>
+            <div class="big" id="oc">ALLOW</div><div class="sub" id="oc-sub">no adverse effect</div></div>
+          <div class="vcard"><span class="eyebrow">Confidence |1 − 2R|</span>
+            <div class="big" id="conf">1.000</div><div class="sub" id="band">High band</div></div>
+        </div>
+        <div id="override-note"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="station">
+  <div class="station-head"><span class="station-num">02</span>
+    <div><h2>The sealed record</h2>
+      <p>Fourteen fields, hashed with SHA-256 over canonical JSON. Every triggered rule carries its
+         norm references inside the hash, so the rule-to-norm link cannot drift from the decision it
+         justified. Edit the record and the seal fails.</p></div>
+  </div>
+  <div class="panel">
+    <pre id="pack"></pre>
+    <div class="hashrow">
+      <span class="badge ok" id="verdict-badge">integrity verified</span>
+      <code id="hash"></code>
+      <button id="btn-verify">Recompute hash</button>
+      <button id="btn-tamper">Tamper with the record</button>
+    </div>
+    <div class="note" id="tamper-note" hidden><b>What just happened.</b> One character of
+      <code>decision_outcome</code> changed. Nothing else moved, and the recomputed digest no longer
+      matches the sealed one. This detects alteration after the fact; it does not prevent it — which
+      is the limit the dissertation states rather than hides.</div>
+  </div>
+</section>
+
+<section class="station">
+  <div class="station-head"><span class="station-num">03</span>
+    <div><h2>Blind-first review</h2>
+      <p>Where an outcome is gated, a person decides. The engine's proposal has no accessor until
+         the reviewer has committed their own, so agreement is measured rather than asserted.</p></div>
+  </div>
+  <div class="panel">
+    <div class="rev-grid">
+      <div>
+        <p class="eyebrow" style="margin-bottom:8px">What the reviewer sees</p>
+        <div id="rev-signals"></div>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:8px">What the session withholds</p>
+        <div id="rev-right">
+          <div class="withheld"><span class="lock">decision_outcome — withheld</span>
+            stored privately when the session opened; no accessor exposes it</div>
+          <p style="font-size:12.5px;color:var(--muted);margin:14px 0 8px">Commit a decision. A
+             reviewer may not return REVIEW — that is the engine's holding state, not a decision.</p>
+          <div class="seg" id="rev-buttons">
+            <button data-o="ALLOW">ALLOW</button><button data-o="QUARANTINE">QUARANTINE</button>
+            <button data-o="REJECT">REJECT</button></div>
+        </div>
+      </div>
+    </div>
+    <div id="rev-out"></div>
+  </div>
+</section>
+
+<section class="station">
+  <div class="station-head"><span class="station-num">04</span>
+    <div><h2>The Commission export</h2>
+      <p>The falsifiable test, executed: every field the DSA Transparency Database requires, populated
+         from the sealed record alone. Two requirements of Article 17 have nowhere to land — a finding
+         about the schema, not about the artefact.</p></div>
+  </div>
+  <div class="panel">
+    <div class="scroll"><table>
+      <thead><tr><th>Article</th><th>Commission field</th><th>Value from the sealed pack</th></tr></thead>
+      <tbody id="export-body"></tbody>
+    </table></div>
+    <div class="note"><b>The field that is usually empty.</b>
+      <code>decision_ground_reference</code> is null in 99.9% of the 131 million statements Kaushal
+      and colleagues analysed. Here it cannot be: the norm references travel inside the hashed
+      payload, so the export projects them rather than asking anyone to supply them afterwards.</div>
+  </div>
+</section>
+
+<footer>
+  <p><b>What this page is.</b> A faithful browser port of <code>gbd-policy-engine</code> v0.2.1 —
+     the same nine rules from <code>policies/v0.2.0.yaml</code>, the same evaluation order, the same
+     canonical-JSON hashing. It was checked field-for-field and hash-for-hash against the Python
+     implementation across 576 signal combinations; all 576 matched, including the SHA-256 digests
+     and the UUIDv5 pack identifiers shown above. Nothing here is a mock-up of the engine's output.</p>
+  <p><b>What it is not.</b> Synthetic signals, uncalibrated thresholds, and a single-operator log.
+     The artefact records how a decision was reached; it does not make the decision correct.</p>
+  <p>Leo Fakhrul · M7935 Enhanced Technology Design Project · University of Strathclyde</p>
+</footer>
+</div>
+
+<script>
+/* ── SHA-256 / SHA-1, synchronous so the page also works from file:// ── */
+// Synchronous SHA-256 and SHA-1 so the page works from file:// as well as https,
+// where crypto.subtle is unavailable.
+const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function utf8(str){const o=[];for(const ch of str){let c=ch.codePointAt(0);
+ if(c<0x80)o.push(c);else if(c<0x800)o.push(192|c>>6,128|c&63);
+ else if(c<0x10000)o.push(224|c>>12,128|(c>>6&63),128|c&63);
+ else o.push(240|c>>18,128|(c>>12&63),128|(c>>6&63),128|c&63);}return o;}
+function pad(b){const l=b.length*8,m=b.slice();m.push(0x80);while(m.length%64!==56)m.push(0);
+ for(let i=7;i>=0;i--)m.push(Math.floor(l/2**(8*i))&255);return m;}
+const rr=(x,n)=>(x>>>n)|(x<<(32-n));
+function sha256(str){let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,
+ 0x1f83d9ab,0x5be0cd19];const m=pad(utf8(str)),w=new Array(64);
+ for(let i=0;i<m.length;i+=64){
+  for(let t=0;t<16;t++)w[t]=(m[i+4*t]<<24|m[i+4*t+1]<<16|m[i+4*t+2]<<8|m[i+4*t+3])>>>0;
+  for(let t=16;t<64;t++){const s0=rr(w[t-15],7)^rr(w[t-15],18)^(w[t-15]>>>3),
+   s1=rr(w[t-2],17)^rr(w[t-2],19)^(w[t-2]>>>10);w[t]=(w[t-16]+s0+w[t-7]+s1)>>>0;}
+  let[a,b,c,d,e,f,g,h]=H;
+  for(let t=0;t<64;t++){const S1=rr(e,6)^rr(e,11)^rr(e,25),ch=(e&f)^(~e&g),
+   t1=(h+S1+ch+K[t]+w[t])>>>0,S0=rr(a,2)^rr(a,13)^rr(a,22),mj=(a&b)^(a&c)^(b&c),
+   t2=(S0+mj)>>>0;h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;}
+  H=[H[0]+a,H[1]+b,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x>>>0);}
+ return H.map(x=>x.toString(16).padStart(8,"0")).join("");}
+function sha1Bytes(bytes){let H=[0x67452301,0xefcdab89,0x98badcfe,0x10325476,0xc3d2e1f0];
+ const m=pad(bytes),w=new Array(80);
+ for(let i=0;i<m.length;i+=64){
+  for(let t=0;t<16;t++)w[t]=(m[i+4*t]<<24|m[i+4*t+1]<<16|m[i+4*t+2]<<8|m[i+4*t+3])>>>0;
+  for(let t=16;t<80;t++){const v=w[t-3]^w[t-8]^w[t-14]^w[t-16];w[t]=((v<<1)|(v>>>31))>>>0;}
+  let[a,b,c,d,e]=H;
+  for(let t=0;t<80;t++){let f,k;
+   if(t<20){f=(b&c)^(~b&d);k=0x5a827999;}
+   else if(t<40){f=b^c^d;k=0x6ed9eba1;}
+   else if(t<60){f=(b&c)^(b&d)^(c&d);k=0x8f1bbcdc;}
+   else{f=b^c^d;k=0xca62c1d6;}
+   const t1=(((a<<5)|(a>>>27))+f+e+k+w[t])>>>0;e=d;d=c;c=((b<<30)|(b>>>2))>>>0;b=a;a=t1;}
+  H=[H[0]+a,H[1]+b,H[2]+c,H[3]+d,H[4]+e].map(x=>x>>>0);}
+ return H.map(x=>x.toString(16).padStart(8,"0")).join("");}
+
+
+const SHA = { sha256, sha1Bytes, utf8 };
+
+/* ── gbd-policy-engine v0.2.1, ported for the browser ── */
+// Faithful browser port of gbd-policy-engine v0.2.1.
+// Verified field-for-field, hash-for-hash, against the Python implementation
+// over 576 signal combinations. See verify.js.
+
+
+
+const BUNDLE = {
+  policy_version: "0.2.0",
+  effective_date: "2026-08-22",
+  oversight_pathway: "internal-complaint-v1",
+  retention_reference: "retention-policy-v1 (synthetic demo: indefinite)",
+  bands: { high: 0.8, medium: 0.5, low: 0.2 },
+  outcomes: { reject: 0.8, quarantine: 0.5, review: 0.3 },
+  adverse_outcomes: ["REVIEW", "QUARANTINE", "REJECT"],
+  gated_outcomes: ["REVIEW"],
+  required_signals: ["fingerprint_match_score", "ownership_claims"],
+  approval: { approved_by: "distributor-demo", approved_at: "2026-08-22T00:00:00Z",
+              role: "controller sign-off (EDPB 07/2020 para 84; GDPR Art 28(3)(a))" },
+  rules: [
+    { rule_id: "RULE_OWNERSHIP_CONFLICT", norm_refs: ["GDPR_22","DSA_17"],
+      articles: ["GDPR Art 22","DSA Art 17(3)(b)"], reason_code: "OWNERSHIP_CONFLICT",
+      description: "Conflicting ownership claims detected on submitted recording.",
+      condition: { type:"input", field:"ownership_claims", op:"count_gt", value:1 },
+      confidence_weight: 0.35, forces_human_review: true, category: "multiple_ownership_claims" },
+    { rule_id: "RULE_FINGERPRINT_PARTIAL", norm_refs: ["DSA_17","DSA_14"],
+      articles: ["DSA Art 17(3)(b)","DSA Art 14"], reason_code: "FINGERPRINT_PARTIAL",
+      description: "Partial acoustic fingerprint match against an existing recording.",
+      condition: { type:"input", field:"fingerprint_match_score", op:"between", value:[0.3,0.75] },
+      confidence_weight: 0.25, category: "fingerprint_match_partial" },
+    { rule_id: "RULE_FINGERPRINT_STRONG", norm_refs: ["DSA_17","DSA_14"],
+      articles: ["DSA Art 17(3)(b)","DSA Art 14"], reason_code: "FINGERPRINT_STRONG",
+      description: "Strong acoustic fingerprint match against an existing recording.",
+      condition: { type:"input", field:"fingerprint_match_score", op:"gte", value:0.75 },
+      confidence_weight: 0.55, category: "fingerprint_match_strong" },
+    { rule_id: "RULE_NEW_ACCOUNT", norm_refs: ["DSA_14"], articles: ["DSA Art 14"],
+      reason_code: "NEW_ACCOUNT", description: "Uploading account is less than 30 days old.",
+      condition: { type:"input", field:"behavioural_signals.account_age_days", op:"lt", value:30 },
+      confidence_weight: 0.15, category: "account_age_lt_30d" },
+    { rule_id: "RULE_TAKEDOWN_HISTORY", norm_refs: ["DSA_14"], articles: ["DSA Art 14"],
+      reason_code: "TAKEDOWN_HISTORY", description: "Account has one or more prior takedowns.",
+      condition: { type:"input", field:"behavioural_signals.takedown_history", op:"gte", value:1 },
+      confidence_weight: 0.25, category: "prior_takedowns_present" },
+    { rule_id: "RULE_AI_DISCLOSURE_MISSING", norm_refs: ["AIACT_13","DSA_14"],
+      articles: ["AI Act Art 13","DSA Art 14"], reason_code: "AI_DISCLOSURE_MISSING",
+      description: "Track declared or detected as AI-generated without required disclosure.",
+      condition: { type:"input", field:"ai_generated_undisclosed", op:"eq", value:true },
+      confidence_weight: 0.2, category: "ai_generated_undisclosed" },
+    { rule_id: "RULE_STATEMENT_OF_REASONS", norm_refs: ["DSA_17"],
+      articles: ["DSA Art 17(1)","DSA Art 17(3)(a)","DSA Art 17(3)(b)","DSA Art 17(3)(c)","DSA Art 17(3)(f)"],
+      reason_code: "STATEMENT_OF_REASONS_EMITTED",
+      description: "Structured statement of reasons emitted per DSA Art 17.",
+      condition: { type:"always" }, confidence_weight: 0.0 },
+    { rule_id: "RULE_HUMAN_REVIEW_ROUTING", norm_refs: ["GDPR_22","AIACT_14","DSA_20"],
+      articles: ["GDPR Art 22","AI Act Art 14","DSA Art 20"], reason_code: "HUMAN_REVIEW_ROUTED",
+      description: "Decision routed to human reviewer (GDPR Art 22 / AI Act Art 14 / DSA Art 20).",
+      condition: { type:"outcome", field:"human_review_required", op:"eq", value:true },
+      confidence_weight: 0.0 },
+    { rule_id: "RULE_PROVENANCE_RECORD", norm_refs: ["GDPR_24","GDPR_5"],
+      articles: ["GDPR Art 24","GDPR Art 5(2)"], reason_code: "PROVENANCE_RECORDED",
+      description: "Policy version and decision recorded for accountability (GDPR Arts 5(2), 24).",
+      condition: { type:"always" }, confidence_weight: 0.0 },
+  ],
+};
+
+const SUBMISSION_SALT = "gbd-demo-salt-v0.2.1";
+const HUMAN_REVIEW = "Human-Review-Required";
+const INTERVENTION = {
+  ALLOW: "none_no_adverse_effect", REVIEW: "before_decision_takes_effect",
+  QUARANTINE: "after_decision_via_oversight_pathway", REJECT: "after_decision_via_oversight_pathway",
+};
+const RISK_DIMENSIONS = BUNDLE.rules.filter(r => r.category).map(r => [r.rule_id, r.category]);
+
+function getField(rec, dotted) {
+  if (dotted === "ai_generated_undisclosed") return !!rec.ai_generated && !rec.ai_disclosed;
+  let cur = rec;
+  for (const part of dotted.split(".")) {
+    if (cur === null || typeof cur !== "object" || !(part in cur)) return null;
+    cur = cur[part];
+  }
+  return cur;
+}
+
+function conditionMet(cond, subject) {
+  if (cond.type === "always") return true;
+  const v = getField(subject, cond.field), t = cond.value;
+  if (cond.op === "count_gt") return v !== null && v.length > t;
+  if (v === null) return false;
+  switch (cond.op) {
+    case "eq": return v === t;   case "neq": return v !== t;
+    case "lt": return v < t;     case "lte": return v <= t;
+    case "gt": return v > t;     case "gte": return v >= t;
+    case "between": return t[0] <= v && v < t[1];
+  }
+  throw new Error("unknown op " + cond.op);
+}
+
+const round3 = x => Math.round((x + Number.EPSILON) * 1000) / 1000;
+
+function evaluateRecord(record, opts = {}) {
+  const trigger_source = opts.trigger_source || "own_initiative_upload_screening";
+  const notice_ref = opts.notice_ref ?? null;
+  const supersedes_pack_id = opts.supersedes_pack_id ?? null;
+
+  const riskRules = BUNDLE.rules.filter(r => r.confidence_weight > 0);
+  const discRules = BUNDLE.rules.filter(r => r.confidence_weight === 0);
+
+  const missing = BUNDLE.required_signals.filter(s => getField(record, s) === null);
+  const safe_state = missing.length > 0;
+
+  const triggered = [], facts = [];
+  let risk = 0, forcesReview = false;
+  for (const rule of riskRules) {
+    if (conditionMet(rule.condition, record)) {
+      risk += rule.confidence_weight;
+      triggered.push({ rule_id: rule.rule_id, description: rule.description,
+                       reason_code: rule.reason_code, norm_refs: [...rule.norm_refs],
+                       articles: [...rule.articles] });
+      if (rule.category) facts.push(rule.category);
+      forcesReview = forcesReview || !!rule.forces_human_review;
+    }
+  }
+  risk = Math.min(risk, 1.0);
+  const direction = risk >= 0.5 ? "concerns_identified" : "no_concerns_identified";
+  const score = round3(Math.abs(1.0 - 2.0 * risk));
+  let band = score >= BUNDLE.bands.high ? "High"
+           : score >= BUNDLE.bands.medium ? "Medium"
+           : score >= BUNDLE.bands.low ? "Low" : HUMAN_REVIEW;
+
+  let outcome;
+  if (forcesReview || safe_state) outcome = "REVIEW";
+  else if (risk >= BUNDLE.outcomes.reject) outcome = "REJECT";
+  else if (risk >= BUNDLE.outcomes.quarantine) outcome = "QUARANTINE";
+  else if (risk >= BUNDLE.outcomes.review) outcome = "REVIEW";
+  else outcome = "ALLOW";
+
+  const human = BUNDLE.gated_outcomes.includes(outcome);
+  if (human) band = HUMAN_REVIEW;
+
+  const outcomeSubject = { human_review_required: human, band, risk_direction: direction,
+                           decision_outcome: outcome };
+  const regulatory = {};
+  for (const rule of discRules) {
+    const subj = rule.condition.type === "outcome" ? outcomeSubject : record;
+    if (conditionMet(rule.condition, subj)) {
+      triggered.push({ rule_id: rule.rule_id, description: rule.description,
+                       reason_code: rule.reason_code, norm_refs: [...rule.norm_refs],
+                       articles: [...rule.articles] });
+      for (const a of rule.articles) regulatory[a] = { rule_id: rule.rule_id, status: "evidenced" };
+    }
+  }
+  for (const rule of riskRules) {
+    if (triggered.some(t => t.rule_id === rule.rule_id)) {
+      for (const a of rule.articles)
+        if (!(a in regulatory)) regulatory[a] = { rule_id: rule.rule_id, status: "evidenced" };
+    }
+  }
+
+  const concerns = direction === "concerns_identified" || human;
+  const quality = !concerns ? "informational" : (facts.length >= 2 ? "specific" : "thin");
+
+  const statement = {
+    action_taken: outcome,
+    action_scope: "submission-level; no duration set by this system",
+    facts_relied_on: [...facts],
+    trigger_source, notice_ref, supersedes_pack_id,
+    automated_means_used: true,
+    automated_detection: true,
+    automated_decision: human ? "not_fully_automated" : "fully_automated",
+    safe_state, missing_signals: [...missing],
+    solely_automated: !human,
+    intervention_point: INTERVENTION[outcome],
+    legal_ground: null,
+    contractual_ground: "distributor terms: metadata, ownership and originality requirements",
+    redress: BUNDLE.oversight_pathway,
+    quality_flag_17_4: quality,
+  };
+
+  const categories = [...facts];
+  if (record.metadata_complete === false) categories.push("metadata_incomplete");
+  for (const s of missing) categories.push(`signal_unavailable:${s}`);
+  if (!categories.length) categories.push("no_risk_signals_detected");
+
+  return { risk, confidence_score: score, confidence_band: band, decision_outcome: outcome,
+           risk_direction: direction, human_review_required: human, solely_automated: !human,
+           intervention_point: INTERVENTION[outcome], triggered_rules: triggered,
+           input_categories: categories, facts_relied_on: facts,
+           regulatory_mapping: regulatory, statement_of_reasons: statement,
+           record };
+}
+
+// ── plain-English explanation (explainer.py) ────────────────────────────────
+const OUTCOME_PHRASES = {
+  ALLOW: "This submission was accepted and no restriction was applied.",
+  REVIEW: "This submission has been held for review by a person before anything takes effect.",
+  QUARANTINE: "This submission has been held back from distribution.",
+  REJECT: "This submission was not accepted for distribution.",
+};
+const FACT_PHRASES = {
+  multiple_ownership_claims: "more than one party claims ownership of this recording",
+  fingerprint_match_partial: "the audio partially matches an existing recording",
+  fingerprint_match_strong: "the audio strongly matches an existing recording",
+  account_age_lt_30d: "the uploading account was created less than 30 days ago",
+  prior_takedowns_present: "the uploading account has previous takedowns",
+  ai_generated_undisclosed: "the track appears to be AI-generated but was not disclosed as such",
+};
+function plainEnglish(r) {
+  const p = [OUTCOME_PHRASES[r.decision_outcome]];
+  p.push(`The decision was made by an automated system using policy version ${BUNDLE.policy_version}. `
+       + `The system's confidence in the assessment behind it is ${r.confidence_score.toFixed(3)} `
+       + `(${r.confidence_band}).`);
+  if (r.facts_relied_on.length)
+    p.push("The assessment relied on the following observations: "
+         + r.facts_relied_on.map(f => FACT_PHRASES[f] || f.replace(/_/g, " ")).join("; ") + ".");
+  else p.push("No risk signals were detected in this submission.");
+  if (r.human_review_required)
+    p.push(`A person will look at this before it takes effect. You can also contest it or ask `
+         + `about it via: ${BUNDLE.oversight_pathway}.`);
+  else if (BUNDLE.adverse_outcomes.includes(r.decision_outcome))
+    p.push(`This decision was taken by automated means without a person reviewing it first. You `
+         + `have the right to ask for a person to look at it, to give your side, and to challenge `
+         + `the decision, via: ${BUNDLE.oversight_pathway}.`);
+  else p.push(`You can contest this outcome via: ${BUNDLE.oversight_pathway}.`);
+  p.push("This record is a readiness signal produced by compliance-support software. "
+       + "It is not a legal determination and does not constitute legal advice.");
+  return p.join(" ");
+}
+
+// ── canonical JSON, byte-identical to Python json.dumps(sort_keys, separators) ──
+const FLOAT_KEYS = new Set(["confidence_score"]);
+function pyStr(s) {
+  let out = '"';
+  for (const ch of s) {
+    const c = ch.codePointAt(0);
+    if (ch === '"') out += '\\"';
+    else if (ch === "\\") out += "\\\\";
+    else if (ch === "\n") out += "\\n";
+    else if (ch === "\r") out += "\\r";
+    else if (ch === "\t") out += "\\t";
+    else if (c < 0x20) out += "\\u" + c.toString(16).padStart(4, "0");
+    else if (c < 0x7f) out += ch;
+    else if (c <= 0xffff) out += "\\u" + c.toString(16).padStart(4, "0");
+    else { const v = c - 0x10000;
+           out += "\\u" + (0xd800 + (v >> 10)).toString(16).padStart(4, "0")
+                + "\\u" + (0xdc00 + (v & 0x3ff)).toString(16).padStart(4, "0"); }
+  }
+  return out + '"';
+}
+function canonical(v, key) {
+  if (v === null) return "null";
+  if (typeof v === "boolean") return v ? "true" : "false";
+  if (typeof v === "number")
+    return (FLOAT_KEYS.has(key) && Number.isInteger(v)) ? v.toFixed(1) : String(v);
+  if (typeof v === "string") return pyStr(v);
+  if (Array.isArray(v)) return "[" + v.map(x => canonical(x)).join(",") + "]";
+  return "{" + Object.keys(v).sort().map(k => pyStr(k) + ":" + canonical(v[k], k)).join(",") + "}";
+}
+
+const sha256Hex = s => SHA.sha256(s);
+const submissionRef = record => sha256Hex(`${SUBMISSION_SALT}|${record.record_id ?? ""}`).slice(0, 32);
+
+// RFC 4122 namespace UUIDv5 (matches Python uuid.uuid5 with the DNS namespace)
+const NS = [0x6b,0xa7,0xb8,0x10,0x9d,0xad,0x11,0xd1,0x80,0xb4,0x00,0xc0,0x4f,0xd4,0x30,0xc8];
+function uuid5(name) {
+  const hex = SHA.sha1Bytes(NS.concat(SHA.utf8(name)));
+  const h = []; for (let i = 0; i < 20; i++) h.push(parseInt(hex.substr(i * 2, 2), 16));
+  h[6] = (h[6] & 0x0f) | 0x50; h[8] = (h[8] & 0x3f) | 0x80;
+  const x = h.slice(0, 16).map(b => b.toString(16).padStart(2, "0")).join("");
+  return `${x.slice(0,8)}-${x.slice(8,12)}-${x.slice(12,16)}-${x.slice(16,20)}-${x.slice(20,32)}`;
+}
+
+const PACK_FIELDS = ["pack_id","submission_ref","decision_timestamp","policy_version",
+  "decision_outcome","confidence_score","confidence_band","triggered_rules","input_categories",
+  "regulatory_mapping","plain_english_explanation","oversight_pathway","retention_reference",
+  "integrity_hash"];
+
+function buildPack(result, timestamp) {
+  const ts = timestamp || new Date().toISOString().replace(/\.\d+Z$/, "Z");
+  const sref = submissionRef(result.record);
+  const regulatory = { ...result.regulatory_mapping };
+  regulatory["DSA Art 17 — statement of reasons"] = result.statement_of_reasons;
+  regulatory["GDPR Art 22 — automated decision-making"] = {
+    decision_outcome: result.decision_outcome,
+    adverse: BUNDLE.adverse_outcomes.includes(result.decision_outcome),
+    solely_automated: result.solely_automated,
+    intervention_point: result.intervention_point, status: "evidenced" };
+  const pid = uuid5(ts + BUNDLE.policy_version + sref
+      + "[" + result.triggered_rules.map(t => pyStr(t.rule_id)).join(", ") + "]"   // Python json.dumps default separators
+      + (Number.isInteger(result.confidence_score)
+          ? result.confidence_score.toFixed(1) : String(result.confidence_score)));
+  const pack = {
+    pack_id: pid, submission_ref: sref, decision_timestamp: ts,
+    policy_version: BUNDLE.policy_version, decision_outcome: result.decision_outcome,
+    confidence_score: result.confidence_score, confidence_band: result.confidence_band,
+    triggered_rules: result.triggered_rules, input_categories: result.input_categories,
+    regulatory_mapping: regulatory, plain_english_explanation: plainEnglish(result),
+    oversight_pathway: BUNDLE.oversight_pathway, retention_reference: BUNDLE.retention_reference,
+  };
+  const body = {}; for (const k of PACK_FIELDS) if (k !== "integrity_hash") body[k] = pack[k];
+  pack.integrity_hash = sha256Hex(canonical(body));
+  return pack;
+}
+
+function verifyPack(pack) {
+  const body = {}; for (const k of PACK_FIELDS) if (k !== "integrity_hash") body[k] = pack[k];
+  return sha256Hex(canonical(body)) === pack.integrity_hash;
+}
+
+// ── Commission statement-of-reasons export (export.py) ──────────────────────
+const VISIBILITY = { REJECT:["DECISION_VISIBILITY_CONTENT_REMOVED"],
+  QUARANTINE:["DECISION_VISIBILITY_CONTENT_DISABLED"], REVIEW:["DECISION_VISIBILITY_OTHER"], ALLOW:[] };
+const SOURCE = { article_16_notice:"SOURCE_ARTICLE_16", trusted_flagger_notice:"SOURCE_TRUSTED_FLAGGER",
+  other_notification:"SOURCE_TYPE_OTHER_NOTIFICATION", own_initiative_upload_screening:"SOURCE_VOLUNTARY" };
+const DECISION_MAP = { fully_automated:"AUTOMATED_DECISION_FULLY",
+                       not_fully_automated:"AUTOMATED_DECISION_PARTIALLY" };
+
+function commissionSor(pack) {
+  const sor = pack.regulatory_mapping["DSA Art 17 — statement of reasons"];
+  if (!sor.contractual_ground && !sor.legal_ground)
+    throw new Error("neither contractual nor legal ground present: decision_ground cannot be populated (Art 17(3)(d)/(e))");
+  const refs = [...new Set(pack.triggered_rules.flatMap(r => r.norm_refs || []))].sort();
+  return {
+    puid: pack.pack_id,
+    decision_visibility: VISIBILITY[pack.decision_outcome],
+    decision_ground: sor.legal_ground ? "DECISION_GROUND_ILLEGAL_CONTENT"
+                                      : "DECISION_GROUND_INCOMPATIBLE_CONTENT",
+    incompatible_content_ground: sor.contractual_ground,
+    incompatible_content_explanation: pack.plain_english_explanation.slice(0, 2000),
+    decision_facts: sor.facts_relied_on.join("; ") || "no risk signals detected",
+    decision_ground_reference: refs,
+    source_type: SOURCE[sor.trigger_source],
+    source_identity: null,
+    automated_detection: sor.automated_detection ? "Yes" : "No",
+    automated_decision: DECISION_MAP[sor.automated_decision],
+    application_date: pack.decision_timestamp.slice(0, 10),
+    territorial_scope: [],
+  };
+}
+
+
+const GBD = { BUNDLE, RISK_DIMENSIONS, evaluateRecord, buildPack, verifyPack, commissionSor,
+               plainEnglish, canonical, PACK_FIELDS, sha256 };
+
+/* ── page ── */
+// ── state ──────────────────────────────────────────────────────────────────
+const S = { rid:"trk-00419", claims:2, fp:0.40, age:12, td:0,
+            ai:false, disclosed:false, meta:true, missing:false };
+const PRESETS = {
+  "clean pass":        { rid:"trk-00417", claims:1, fp:0.05, age:400, td:0, ai:false, disclosed:false, meta:true,  missing:false },
+  "thin reasons":      { rid:"trk-00418", claims:1, fp:0.40, age:400, td:0, ai:false, disclosed:false, meta:true,  missing:false },
+  "ambiguous":         { rid:"trk-00419", claims:2, fp:0.40, age:12,  td:0, ai:false, disclosed:false, meta:true,  missing:false },
+  "judgment illusion": { rid:"trk-00420", claims:1, fp:0.90, age:12,  td:2, ai:false, disclosed:false, meta:true,  missing:false },
+  "thin quarantine":   { rid:"trk-00421", claims:1, fp:0.90, age:400, td:0, ai:false, disclosed:false, meta:true,  missing:false },
+  "signal lost":       { rid:"trk-00422", claims:1, fp:0.05, age:400, td:0, ai:false, disclosed:false, meta:true,  missing:true  },
+};
+const TS = "2026-09-18T09:00:00Z";
+const DIM_LABEL = {
+  multiple_ownership_claims:"more than one ownership claimant",
+  fingerprint_match_partial:"partial fingerprint match",
+  fingerprint_match_strong:"strong fingerprint match",
+  account_age_lt_30d:"account younger than 30 days",
+  prior_takedowns_present:"prior takedowns on the account",
+  ai_generated_undisclosed:"AI-generated and undisclosed",
+};
+const OC_COLOR = { ALLOW:"var(--allow)", REVIEW:"var(--review)",
+                   QUARANTINE:"var(--quarantine)", REJECT:"var(--reject)" };
+const OC_SUB = { ALLOW:"no restriction applied", REVIEW:"held for a person before it takes effect",
+                 QUARANTINE:"held back; a person comes on complaint",
+                 REJECT:"not accepted; a person comes on complaint" };
+
+let current = null, tampered = false, review = null;
+
+function record() {
+  const r = { record_id:S.rid, ownership_claims:Array(S.claims).fill("claimant"),
+              fingerprint_match_score:S.fp,
+              behavioural_signals:{ account_age_days:S.age, takedown_history:S.td },
+              ai_generated:S.ai, ai_disclosed:S.disclosed, metadata_complete:S.meta };
+  if (S.missing) delete r.fingerprint_match_score;
+  return r;
+}
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+
+// ── render ─────────────────────────────────────────────────────────────────
+function render() {
+  const rec = record();
+  const res = GBD.evaluateRecord(rec);
+  const pack = GBD.buildPack(res, TS);
+  current = pack; tampered = false; review = null;
+  $("tamper-note").hidden = true;
+
+  const fired = new Set(res.triggered_rules.map(t => t.rule_id));
+  const weights = Object.fromEntries(GBD.BUNDLE.rules.map(r => [r.rule_id, r.confidence_weight]));
+  const refs = Object.fromEntries(GBD.BUNDLE.rules.map(r => [r.rule_id, r.norm_refs.join(" · ")]));
+  $("dims").innerHTML = GBD.RISK_DIMENSIONS.map(([id, cat]) => `
+    <div class="dim ${fired.has(id) ? "fired" : ""}">
+      <span class="pip"></span>
+      <span class="nm">${esc(DIM_LABEL[cat] || cat)}</span>
+      <span class="w">${fired.has(id) ? "+" + weights[id].toFixed(2) : "—"}</span>
+      <span class="refs">${esc(id)} · ${esc(refs[id])}</span>
+    </div>`).join("");
+
+  $("rfill").style.width = (res.risk * 100).toFixed(1) + "%";
+  $("oc").textContent = res.decision_outcome;
+  $("oc-card").style.setProperty("--oc", OC_COLOR[res.decision_outcome]);
+  $("oc-sub").textContent = OC_SUB[res.decision_outcome];
+  $("conf").textContent = res.confidence_score.toFixed(3);
+  $("band").textContent = res.confidence_band === "Human-Review-Required"
+    ? "band suspended — gated to a person" : res.confidence_band + " band";
+
+  const sor = res.statement_of_reasons;
+  let note = "";
+  if (sor.safe_state)
+    note = `<div class="note"><b>Safe state.</b> A required signal is absent
+      (<code>${esc(sor.missing_signals.join(", "))}</code>), so the engine refuses to decide on
+      partial evidence and routes to REVIEW. Silence would have under-counted risk and produced a
+      confident ALLOW out of missing data.</div>`;
+  else if (fired.has("RULE_OWNERSHIP_CONFLICT") && res.decision_outcome === "REVIEW")
+    note = `<div class="note"><b>Threshold overridden.</b> R is ${res.risk.toFixed(2)}, which the
+      bands would send to ${res.risk >= 0.8 ? "REJECT" : res.risk >= 0.5 ? "QUARANTINE" : "ALLOW"}.
+      Contested ownership carries <code>forces_human_review</code>, so it goes to a person whatever
+      the score says: significance attaches to the affected artist, not to the system's certainty.</div>`;
+  else if (sor.quality_flag_17_4 === "thin")
+    note = `<div class="note"><b>Structurally complete, thin all the same.</b> Every field Article
+      17(3) enumerates is populated, and the statement still rests on one named fact. The engine
+      flags that under <code>quality_flag_17_4</code>; it cannot resolve it. Form is not
+      sufficiency, and this flag is where the dissertation's boundary sits.</div>`;
+  $("override-note").innerHTML = note;
+
+  paintPack();
+  paintReview(res, pack);
+  paintExport(pack);
+}
+
+function paintPack() {
+  $("pack").textContent = JSON.stringify(current, null, 2)
+    .replace(/("confidence_score": )(\d+)(,)/, (m, a, n, c) => a + Number(n).toFixed(1) + c);
+  const ok = GBD.verifyPack(current);
+  const b = $("verdict-badge");
+  b.className = "badge " + (ok ? "ok" : "bad");
+  b.textContent = ok ? "integrity verified" : "integrity check FAILED";
+  $("hash").textContent = current.integrity_hash;
+}
+
+function paintReview(res, pack) {
+  const gated = res.human_review_required;
+  const fired = Object.fromEntries(pack.triggered_rules.map(t => [t.rule_id, t]));
+  $("rev-signals").innerHTML = `<div class="dims">` + GBD.RISK_DIMENSIONS.map(([id, cat]) => `
+      <div class="dim ${fired[id] ? "fired" : ""}"><span class="pip"></span>
+        <span class="nm">${esc(DIM_LABEL[cat] || cat)}</span>
+        <span class="w">${fired[id] ? esc(fired[id].reason_code) : "not fired"}</span></div>`).join("")
+    + `</div><p style="font-size:12px;color:var(--muted);margin:10px 0 0">…plus the triggered rules
+       with their norm references, the input categories, the confidence band, and the plain-English
+       explanation. Ten items in all; the proposal is not among them.</p>`;
+
+  $("rev-right").querySelectorAll("#rev-buttons button").forEach(b => { b.disabled = !gated; });
+  $("rev-out").innerHTML = gated ? "" : `<div class="note" style="margin-top:16px">
+      <b>No review session opens.</b> This outcome is ${esc(res.decision_outcome)}, and only REVIEW is
+      gated in this bundle. For QUARANTINE and REJECT the human arrives afterwards, on complaint,
+      through the Article 22(3) pathway — which is the seam Chapter 7 argues rather than hides.</div>`;
+}
+
+function commit(outcome) {
+  const proposal = current.decision_outcome;
+  const agreement = outcome === proposal ? "AGREE" : "OVERRIDE";
+  const rev = {
+    review_id: "rev-" + current.pack_id.slice(0, 8),
+    pack_id: current.pack_id, policy_version: current.policy_version,
+    reviewer_id: "rev-07", review_timestamp: TS, blind_first: true,
+    signals_shown: GBD.RISK_DIMENSIONS.map(([, c]) => "dimension:" + c)
+      .concat(["triggered_rules", "input_categories", "confidence_band", "explanation"]),
+    reviewer_outcome: outcome, engine_proposal: proposal, agreement,
+    reason_text: "", forwarded_to_provider: false, time_to_decision_ms: 41000,
+  };
+  rev.integrity_hash = GBD.sha256(GBD.canonical(rev));
+  review = rev;
+  $("rev-out").innerHTML = `
+    <div class="note" style="margin-top:18px"><b>Proposal revealed, after the fact.</b>
+      The engine proposed <code>${esc(proposal)}</code>; the reviewer committed
+      <code>${esc(outcome)}</code>. Recorded as <b>${agreement}</b>. Persistently 1.0 across a
+      population is what Binns and Veale mean by rarely or never overturning — and because the order
+      was blind-first, that number is a measurement rather than a claim.</div>
+    <pre style="margin-top:12px">${esc(JSON.stringify(rev, null, 2))}</pre>`;
+}
+
+function paintExport(pack) {
+  let out, err = null;
+  try { out = GBD.commissionSor(pack); } catch (e) { err = e.message; }
+  const rows = [
+    ["17(1)", "puid", out && out.puid],
+    ["—", "submission_ref (internal, never exported)", pack.submission_ref],
+    ["17(3)(a)", "decision_visibility", out && JSON.stringify(out.decision_visibility)],
+    ["17(3)(b)", "decision_facts", out && out.decision_facts],
+    ["17(3)(b)", "source_type", out && out.source_type],
+    ["17(3)(c)", "automated_detection", out && out.automated_detection],
+    ["17(3)(c)", "automated_decision", out && out.automated_decision],
+    ["17(3)(d)", "decision_ground", out && out.decision_ground],
+    ["17(3)(e)", "incompatible_content_ground", out && out.incompatible_content_ground],
+    ["17(3)(d)/(e)", "decision_ground_reference", out && JSON.stringify(out.decision_ground_reference)],
+    ["24(5)", "source_identity", "null — never exported"],
+  ];
+  $("export-body").innerHTML = rows.map(([a, k, v]) =>
+      `<tr><td class="k">${esc(a)}</td><td class="k">${esc(k)}</td><td class="v">${esc(v ?? "—")}</td></tr>`)
+    .join("")
+    + `<tr class="gap"><td>17(3)(f)</td><td colspan="2">information on redress —
+        no field in the Commission schema</td></tr>
+       <tr class="gap"><td>17(4)</td><td colspan="2">whether the statement was precise and specific
+        enough — no field in the Commission schema</td></tr>`;
+}
+
+// ── wiring ─────────────────────────────────────────────────────────────────
+$("presets").innerHTML = Object.keys(PRESETS)
+  .map(n => `<button data-p="${n}">${n}</button>`).join("");
+$("presets").addEventListener("click", e => {
+  const n = e.target.dataset.p; if (!n) return;
+  Object.assign(S, PRESETS[n]); syncControls(); render();
+});
+function pair(a, b, key, va, vb) {
+  $(a).addEventListener("click", () => { S[key] = va; syncControls(); render(); });
+  $(b).addEventListener("click", () => { S[key] = vb; syncControls(); render(); });
+}
+pair("ai-no", "ai-yes", "ai", false, true);
+pair("dis-no", "dis-yes", "disclosed", false, true);
+pair("md-yes", "md-no", "meta", true, false);
+pair("miss-no", "miss-yes", "missing", false, true);
+[["claims", "claims", v => +v], ["fp", "fp", v => +v], ["age", "age", v => +v], ["td", "td", v => +v]]
+  .forEach(([id, key, cast]) => $(id).addEventListener("input", e => {
+    S[key] = cast(e.target.value); syncControls(); render(); }));
+$("rid").addEventListener("input", e => { S.rid = e.target.value || "trk-00000"; render(); });
+$("btn-verify").addEventListener("click", paintPack);
+$("btn-tamper").addEventListener("click", () => {
+  if (tampered) { render(); return; }
+  current = JSON.parse(JSON.stringify(current));
+  current.decision_outcome = current.decision_outcome === "ALLOW" ? "ALLOX"
+    : current.decision_outcome.slice(0, -1) + "X";
+  tampered = true; paintPack(); $("tamper-note").hidden = false;
+  $("btn-tamper").textContent = "Restore the record";
+});
+$("rev-buttons").addEventListener("click", e => {
+  const o = e.target.dataset.o; if (o && !e.target.disabled) commit(o);
+});
+function syncControls() {
+  $("rid").value = S.rid;
+  for (const [id, key, fmt] of [["claims","claims",v=>v],["fp","fp",v=>v.toFixed(2)],
+                                ["age","age",v=>v],["td","td",v=>v]]) {
+    $(id).value = S[key]; $(id + "-v").textContent = fmt(S[key]);
+  }
+  const on = (el, yes) => $(el).classList.toggle("on", yes);
+  on("ai-no", !S.ai); on("ai-yes", S.ai);
+  on("dis-no", !S.disclosed); on("dis-yes", S.disclosed);
+  on("md-yes", S.meta); on("md-no", !S.meta);
+  on("miss-no", !S.missing); on("miss-yes", S.missing);
+  $("fp").disabled = S.missing;
+}
+syncControls();
+render();
+
+</script>
+
+</body>
+</html>

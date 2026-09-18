@@ -9,6 +9,9 @@ description: 'v0.2: adds required-signal safe state (AI Act Art 14(4)(e)), contr
   approval block (EDPB 07/2020 para 84), notice-triggered re-entry support; rules
   unchanged from 0.1.0.'
 oversight_pathway: internal-complaint-v1
+# The same route, in words the affected artist can act on. DSA Art 17(4) requires the
+# statement to be 'clear and easily comprehensible'; a scheme identifier is neither.
+oversight_pathway_label: "the 'Query this decision' link on the release in your dashboard"
 retention_reference: 'retention-policy-v1 (synthetic demo: indefinite)'
 bands:
   high: 0.8

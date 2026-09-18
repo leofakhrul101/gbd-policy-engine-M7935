@@ -27,7 +27,7 @@ st.caption(
     "determination of compliance. Synthetic data only."
 )
 
-BUNDLE_PATH = ROOT / "policies" / "v0.1.0.yaml"
+BUNDLE_PATH = ROOT / "policies" / "v0.2.0.yaml"
 
 
 @st.cache_resource
@@ -91,17 +91,19 @@ with steps[3]:
 
 with steps[4]:
     st.subheader("Change a threshold → bump version → prior decision unchanged")
-    new_high = st.slider("High-band threshold (v0.2.0)", 0.80, 0.99, 0.95)
+    new_high = st.slider("High-band threshold, proposed v0.3.0", 0.80, 0.99, 0.95)
     data = copy.deepcopy(bundle.raw)
-    data["policy_version"] = "0.2.0"
+    data["policy_version"] = "0.3.0-proposed"
     data["bands"]["high"] = new_high
     v2 = bundle_from_dict(data)
     rec = records["judgment_illusion"]
     old, new = evaluate(rec, bundle), evaluate(rec, v2)
     col1, col2 = st.columns(2)
-    col1.metric("v0.1.0", f"{old.confidence_score:.3f}", old.confidence_band)
-    col2.metric("v0.2.0", f"{new.confidence_score:.3f}", new.confidence_band)
-    st.info("Prior Evidence Packs still reference v0.1.0 and replay identically (GOV-2/4).")
+    col1.metric("v0.2.0 — in force", f"{old.confidence_score:.3f}", old.confidence_band)
+    col2.metric("v0.3.0 — proposed", f"{new.confidence_score:.3f}", new.confidence_band)
+    st.info("Change the threshold and the same submission can reach a different outcome — but "
+        "every pack already issued still names v0.2.0 and replays identically against it. "
+        "A policy change is an event with a date, not a silent edit (GOV-2/4).")
 
 with steps[5]:
     st.subheader("Plain-English explanation (AI Act Art 13)")

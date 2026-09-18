@@ -1,4 +1,13 @@
-"""Plain-English explanation generator (AI Act Art 13; DSA Art 17(4)) — EP-4."""
+"""Plain-English explanation generator (AI Act Art 13; DSA Art 17(4)) — EP-4.
+
+Two registers, one decision. The sealed pack and the Commission export carry machine
+references — a policy version, a scheme identifier, a confidence score — because an
+auditor needs to resolve them. The recipient needs none of that: Art 17(4) asks for a
+statement that is 'clear and easily comprehensible' and precise enough to let them
+'effectively exercise the possibilities for redress'. So the identifiers are gathered
+into one clearly-labelled reference line at the end, and the sentences above it say what
+happened, why, and what the artist can do, in words an artist uses.
+"""
 
 from __future__ import annotations
 
@@ -22,14 +31,17 @@ _FACT_PHRASES = {
 }
 
 
+def _route(bundle: PolicyBundle) -> str:
+    """How to reach redress, in words. Falls back to the machine reference if a bundle
+    predates the label — a wrong-register sentence beats a missing one."""
+    return bundle.oversight_pathway_label or bundle.oversight_pathway
+
+
 def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
     parts: list[str] = []
     parts.append(_OUTCOME_PHRASES[result.decision_outcome])
-    parts.append(
-        f"The decision was made by an automated system using policy version "
-        f"{bundle.policy_version}. The system's confidence in the assessment behind it is "
-        f"{result.confidence_score:.3f} ({result.confidence_band})."
-    )
+    parts.append("This decision was made by automated means — software applying our "
+                 "published rules — and no person had looked at it when it was made.")
     if result.facts_relied_on:
         reasons = "; ".join(_FACT_PHRASES.get(f, f.replace("_", " ")) for f in result.facts_relied_on)
         parts.append(f"The assessment relied on the following observations: {reasons}.")
@@ -37,19 +49,23 @@ def plain_english(result: EvaluationResult, bundle: PolicyBundle) -> str:
         parts.append("No risk signals were detected in this submission.")
     if result.human_review_required:
         parts.append(
-            f"A person will look at this before it takes effect. You can also contest it "
-            f"or ask about it via: {bundle.oversight_pathway}."
+            f"A person will look at this before anything takes effect. You can also tell us "
+            f"why you think it is wrong, using {_route(bundle)}."
         )
     elif result.decision_outcome in bundle.adverse_outcomes:
         parts.append(
-            f"This decision was taken by automated means without a person reviewing it "
-            f"first. You have the right to ask for a person to look at it, to give your "
-            f"side, and to challenge the decision, via: {bundle.oversight_pathway}."
+            f"No person reviewed this before it took effect. You can ask for a person to look "
+            f"at it, give your side, and challenge it, using {_route(bundle)}."
         )
     else:
-        parts.append(f"You can contest this outcome via: {bundle.oversight_pathway}.")
+        parts.append(f"If you think this is wrong, you can tell us using {_route(bundle)}.")
     parts.append(
-        "This record is a readiness signal produced by compliance-support software. "
-        "It is not a legal determination and does not constitute legal advice."
+        "This is a check on how your release was handled. It is not a legal determination that "
+        "anything is illegal, and it is not legal advice."
+    )
+    parts.append(
+        f"Reference, if you contact us or if this decision is audited: policy version "
+        f"{bundle.policy_version}, assessment confidence {result.confidence_score:.3f} "
+        f"({result.confidence_band}), redress scheme {bundle.oversight_pathway}."
     )
     return " ".join(parts)

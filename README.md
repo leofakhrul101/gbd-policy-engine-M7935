@@ -13,12 +13,22 @@ writes one regulator-legible record for every decision it makes.
 
 ```bash
 pip install -e ".[dev,demo]"
-pytest                      # full suite incl. threshold-boundary tests
+pytest                      # 52 tests; each v0.2 test names the legal finding it operationalises
 streamlit run demo/app.py   # 6-step supervisor walkthrough
 ```
 
-No install needed to see the output: open `docs/walkthrough.html` in a browser,
-or read the four committed records in `examples/`.
+**No install needed.** Open `docs/demo.html` in any browser — the engine is ported to
+JavaScript and runs locally, with no server and nothing to fetch. Move the signals and the
+whole chain re-forms: the six risk dimensions, the accumulated risk, the sealed 14-field
+Evidence Pack with its SHA-256 digest, blind-first review, and the Commission export. A
+"tamper" control alters one character of the record so you can watch the seal fail.
+
+That port was checked field-for-field and hash-for-hash against this Python implementation
+across 576 signal combinations; all 576 matched, including the digests and the UUIDv5 pack
+identifiers. It is the same engine, not an illustration of it.
+
+`docs/walkthrough.html` is the earlier v0.1.0 walkthrough, kept as the *before* exhibit.
+`examples/` holds four v0.1.0 packs for the same reason — see `APPENDIX-four-edge-cases.md`.
 
 ## What it does, and what it does not
 
@@ -36,10 +46,48 @@ question begins after the signals arrive.
 | Layer | Where | What |
 |---|---|---|
 | 1 · Regulatory Norm | `norms/norms.yaml` | OSCOLA-citable records for GDPR Arts 5/22/24, AI Act Arts 13/14, DSA Arts 14/17/20, each with a mechanisability verdict |
-| 2 · Policy Translation | `policies/v0.1.0.yaml` (+ JSON Schema) | Versioned rules, each carrying its full Norm-to-Control chain, plus the outcome thresholds |
+| 2 · Policy Translation | `policies/v0.2.0.yaml` (+ JSON Schema) | Versioned rules, each carrying its full Norm-to-Control chain, plus the outcome thresholds, required signals and the controller approval block |
 | 3 · Decision Logic | `src/gbd/engine.py` | Pure, deterministic. Produces an outcome and a confidence score |
-| 4 · Evidence Pack | `src/gbd/evidence_pack.py` | One 13-field, SHA-256-hashed record per decision |
+| 4 · Evidence Pack | `src/gbd/evidence_pack.py` | One 14-field, SHA-256-hashed record per decision |
 | 5 · Governance & Provenance | `src/gbd/audit_log.py` | Append-only SQLite log; any prior policy version reconstructable and replayable |
+
+Two modules attach to the sealed record rather than to the decision logic. Both
+read a decision; neither can remake one.
+
+| Module | What |
+|---|---|
+| `src/gbd/review.py` | Blind-first human review. The engine's proposed outcome has no accessor until the reviewer has committed their own; the sealed review record carries reviewer identity, AGREE or OVERRIDE, and time to decision |
+| `src/gbd/export.py` | Projection onto the Commission's DSA statement-of-reasons schema. Refuses to export where no ground is present; the ground reference is never null |
+
+## What v0.2 added, and why
+
+Each change answers a finding in the dissertation's legal analysis, and each has
+a test that names the finding it operationalises (`tests/test_v02.py`).
+
+- **Sealed norm references.** Every triggered rule carries its `norm_refs` inside
+  the hashed payload, so the rule-to-norm link cannot drift from the decision.
+  A mapping table written afterwards is compliance by document, which is the
+  thing this artefact argues against. DSA Art 17(3)(d)–(e).
+- **Two-limb automation record.** `automated_detection` and `automated_decision`
+  are recorded separately, as Art 17(3)(c) and the Commission's own schema
+  require.
+- **Safe state.** A missing required signal routes to REVIEW rather than
+  producing a confident ALLOW from absent evidence. AI Act Art 14(4)(e),
+  recital 73.
+- **Blind-first review.** Withholding the engine's proposal until the reviewer
+  commits makes agreement a measurement rather than an assertion — the only
+  answer available to SCHUFA's "draws strongly" test and to the rubber-stamping
+  literature.
+- **Notice-triggered re-entry.** An Art 16 notice re-opens a prior decision,
+  including an ALLOW, and the new decision names the one it supersedes.
+- **Controller approval.** The policy bundle carries the controller's sign-off,
+  which is what keeps the vendor a processor on EDPB 07/2020 para 84.
+- **Commission export.** Every required field populates from the sealed pack
+  alone, and the ground reference is never null — the field the Transparency
+  Database shows as empty in 99.9% of 131 million records.
+
+`docs/CHANGES-v0.2.md` records the four defects closed in v0.2.1 and why each
+mattered legally.
 
 ## Outcomes and confidence are separate
 

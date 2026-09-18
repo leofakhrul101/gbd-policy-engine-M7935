@@ -1,7 +1,7 @@
 """v0.2 tests — safe state, norm_refs in the sealed payload, blind-first review,
 notice-triggered re-entry, controller approval, Commission export.
 
-Each test names the legal finding it operationalises. See docs/CHANGES_v0.1.md.
+Each test names the legal finding it operationalises. See docs/CHANGES-v0.2.md.
 """
 
 from pathlib import Path
@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from gbd.audit_log import AuditLog
-from gbd.engine import ALLOW, REJECT, REVIEW, evaluate
+from gbd.engine import ALLOW, QUARANTINE, REJECT, REVIEW, RISK_DIMENSIONS, evaluate
 from gbd.evidence_pack import build_pack, verify_integrity
 from gbd.export import commission_sor
 from gbd.policy import load_bundle
@@ -101,6 +101,11 @@ def test_blind_first_review(v02, risky_record):
     session = ReviewSession(pack, reviewer_id="rev-07", clock_ms=1000)
     shown = {s["what"] for s in session.signals()}
     assert "triggered_rules" in shown and "explanation" in shown
+    # every risk dimension is shown, fired or not — not only the ones that fired
+    assert session.dimensions_shown() == len(RISK_DIMENSIONS) == 6
+    dims = [s for s in session.signals() if s["what"].startswith("dimension:")]
+    assert any(d["value"]["fired"] for d in dims)
+    assert any(not d["value"]["fired"] for d in dims)
     assert not any("proposal" in s["what"] or "outcome" in s["what"] for s in session.signals())
     record = session.commit(REJECT, reason_text="strong match + conflict", clock_ms=61000)
     assert record["blind_first"] is True
@@ -130,6 +135,8 @@ def test_reentry_from_notice(v02, clean_record):
     sor = r2.statement_of_reasons
     assert sor["trigger_source"] == "article_16_notice"
     assert sor["notice_ref"] == "NOTICE-2026-0042"
+    # the re-entry names the decision it re-opens (audit A4)
+    assert sor["supersedes_pack_id"] == original["pack_id"]
 
 
 # 9 — review events are append-only and the agreement rate is computable
@@ -169,3 +176,50 @@ def test_commission_export(v02, risky_record, clean_record):
     r2 = reentry_from_notice(pack, clean_record, v02, notice_ref="N-1")
     pack2 = build_pack(r2, v02, timestamp=TS)
     assert commission_sor(pack2)["source_type"] == "SOURCE_ARTICLE_16"
+
+
+# 12 — every pack names the submission it decides, pseudonymously; two different
+#      submissions with an identical signal profile in the same second remain
+#      distinct records and both persist (audit A1; DSA Art 17(1), Art 24(5)).
+def test_pack_identifies_its_submission(v02, clean_record):
+    import sqlite3
+    a = dict(clean_record, record_id="track-AAA")
+    b = dict(clean_record, record_id="track-ZZZ")
+    pa = build_pack(evaluate(a, v02), v02, timestamp=TS)
+    pb = build_pack(evaluate(b, v02), v02, timestamp=TS)
+    assert pa["submission_ref"] and pa["submission_ref"] != pb["submission_ref"]
+    assert "track-AAA" not in str(pa), "the raw identifier must never enter the pack"
+    assert pa["pack_id"] != pb["pack_id"]
+    assert verify_integrity(pa) and verify_integrity(pb)
+    log = AuditLog()
+    log.register_policy(v02)
+    log.record_decision(pa)
+    log.record_decision(pb)          # would raise IntegrityError before v0.2.1
+    assert len(log.list_decisions()) == 2
+    # and the reference is stable: the same submission always resolves the same way
+    assert build_pack(evaluate(a, v02), v02, timestamp=TS)["submission_ref"] == pa["submission_ref"]
+
+
+# 13 — the 17(4) sufficiency flag actually reaches 'thin': a decision that is
+#      structurally complete under 17(3) yet rests on a single named fact.
+#      This is the boundary thesis under test, not merely asserted (audit A3).
+def test_thin_statement_is_reachable_and_flagged(v02, clean_record):
+    lone_signal = dict(clean_record, fingerprint_match_score=0.9)
+    r = evaluate(lone_signal, v02)
+    assert r.decision_outcome == QUARANTINE
+    assert len(r.facts_relied_on) == 1
+    assert r.statement_of_reasons["quality_flag_17_4"] == "thin"
+    # structurally complete all the same: every 17(3) field is populated
+    for field_name in ("action_taken", "facts_relied_on", "automated_means_used",
+                       "contractual_ground", "redress"):
+        assert r.statement_of_reasons[field_name] not in (None, "", [])
+
+
+# 14 — the Commission export carries the submission reference forward, so a
+#      database row can be traced back to one sealed decision.
+def test_export_carries_submission_reference(v02, risky_record):
+    pack = build_pack(evaluate(risky_record, v02), v02, timestamp=TS)
+    out = commission_sor(pack)
+    assert out["puid"] == pack["pack_id"]
+    assert pack["submission_ref"] not in str(out), \
+        "the submission reference stays internal; only the pack id is exported"

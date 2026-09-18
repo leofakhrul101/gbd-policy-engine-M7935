@@ -27,7 +27,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from gbd.engine import ALLOW, QUARANTINE, REJECT, REVIEW, EvaluationResult, evaluate
+from gbd.engine import (ALLOW, QUARANTINE, REJECT, REVIEW, RISK_DIMENSIONS,
+                        EvaluationResult, evaluate)
 from gbd.policy import PolicyBundle
 
 REVIEW_OUTCOMES = (ALLOW, QUARANTINE, REJECT)   # a reviewer must decide; REVIEW is not a decision
@@ -66,15 +67,34 @@ class ReviewSession:
         self._committed = False
 
     def signals(self) -> list[dict[str, Any]]:
-        """Everything the reviewer may see before deciding: rules that fired,
-        reason codes, norm references, categories, plain-English explanation.
-        Deliberately NOT included: the engine's proposed outcome."""
-        return [
+        """Everything the reviewer may see before deciding.
+
+        All six risk dimensions are shown, each marked fired or not-fired. A
+        reviewer who sees only the rules that fired cannot tell whether the
+        engine looked at the right things, which is the competence WP29
+        (WP251rev.01, 21) requires of meaningful oversight; the dimensions that
+        stayed silent are evidence too (audit A2).
+
+        Deliberately NOT included: the engine's proposed outcome.
+        """
+        fired = {r["rule_id"]: r for r in self._pack["triggered_rules"]}
+        out: list[dict[str, Any]] = [
+            {"what": f"dimension:{label}",
+             "value": {"fired": rule_id in fired,
+                       "reason_code": fired.get(rule_id, {}).get("reason_code")}}
+            for rule_id, label in RISK_DIMENSIONS
+        ]
+        out += [
             {"what": "triggered_rules", "value": self._pack["triggered_rules"]},
             {"what": "input_categories", "value": self._pack["input_categories"]},
             {"what": "confidence_band", "value": self._pack["confidence_band"]},
             {"what": "explanation", "value": self._pack["plain_english_explanation"]},
         ]
+        return out
+
+    def dimensions_shown(self) -> int:
+        """How many risk dimensions the reviewer was shown (fired or not)."""
+        return sum(1 for s in self.signals() if s["what"].startswith("dimension:"))
 
     def commit(self, reviewer_outcome: str, reason_text: str = "",
                forwarded_to_provider: bool = False, clock_ms: int | None = None) -> dict[str, Any]:
@@ -118,11 +138,14 @@ def reentry_from_notice(
     """Re-open a prior decision (including an ALLOW) on receipt of an Art 16 notice.
 
     Re-evaluates the same submission record with trigger_source set to the
-    notice, so the fresh statement of reasons carries 17(3)(b) correctly and the
-    new Evidence Pack references the original via its hash chain in the caller.
+    notice, so the fresh statement of reasons carries 17(3)(b) correctly, and
+    records the pack_id of the decision being re-opened in supersedes_pack_id.
+    Without that link the rightsholder's route produces an orphan decision that
+    cannot be tied to the ALLOW it contests (audit A4).
     """
     return evaluate(record, bundle,
-                    trigger_source="article_16_notice", notice_ref=notice_ref)
+                    trigger_source="article_16_notice", notice_ref=notice_ref,
+                    supersedes_pack_id=original_pack["pack_id"])
 
 
 def agreement_rate(records: list[dict[str, Any]]) -> float | None:

@@ -2,9 +2,10 @@
 #
 # 8 norm records: GDPR Arts 5, 22, 24 · AI Act Arts 13, 14 · DSA Arts 14, 17, 20.
 # All 8 carry completed doctrinal analysis, ported from the "Norm Extraction — M7935"
-# Notion database. DSA_17 is verified against the OJ text; the other 7 are drafted and
-# await that re-verification.
-# Every article reference must be re-verified against the OJ text before submission.
+# Notion database. Four are verified against the OJ text (DSA_14, DSA_17, DSA_20,
+# AIACT_14); four remain drafted — analysis complete, article reference not yet
+# re-verified (GDPR_5, GDPR_22, GDPR_24, AIACT_13). Each record states its own status,
+# and 'drafted' is a claim about the citation, not about the analysis.
 
 norms:
   # ── DSA ──────────────────────────────────────────────────────────────────

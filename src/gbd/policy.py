@@ -26,6 +26,7 @@ class PolicyBundle:
     gated_outcomes: list[str]
     rules: list[dict[str, Any]]
     required_signals: list[str] = field(default_factory=list)   # v0.2: safe-state (AI Act Art 14(4)(e))
+    oversight_pathway_label: str = ""                           # v0.2.2: the same route in words a recipient can act on (DSA Art 17(4))
     approval: dict[str, Any] | None = None                      # v0.2: controller sign-off (EDPB 07/2020 para 84)
     raw: dict[str, Any] = field(repr=False, default_factory=dict)
 
@@ -56,6 +57,7 @@ def bundle_from_dict(data: dict[str, Any]) -> PolicyBundle:
         gated_outcomes=list(data["gated_outcomes"]),
         rules=list(data["rules"]),
         required_signals=list(data.get("required_signals", [])),
+        oversight_pathway_label=data.get("oversight_pathway_label", ""),
         approval=data.get("approval"),
         raw=data,
     )

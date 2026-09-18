@@ -1,5 +1,10 @@
 # Appendix — Four Demonstration Edge Cases
 
+> **This is the v0.1.0 exhibit, kept deliberately.** The packs below have 13 fields and carry no
+> `norm_refs`, no `submission_ref` and no two-limb automation record. That is the *before* state
+> the dissertation's conformance test reports in Chapter 6; `docs/CHANGES-v0.2.md` records what
+> changed and why. For current output, open `docs/demo.html` or run the test suite.
+
 Engine: gbd-policy-engine v0.1.0 · policy bundle 0.1.0 · fixed timestamp 2026-07-06T12:00:00Z for reproducibility.
 Reproduce: `python -m pytest tests/test_engine.py` or re-run any record via `gbd.evaluate()`.
 

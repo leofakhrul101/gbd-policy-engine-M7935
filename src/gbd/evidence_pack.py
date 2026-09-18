@@ -1,7 +1,7 @@
 """Evidence Pack Layer — one regulator-legible record per decision (EP-1..6).
 
-Schema — exactly these 13 fields:
-  pack_id, decision_timestamp, policy_version, decision_outcome, confidence_score,
+Schema — exactly these 14 fields:
+  pack_id, submission_ref, decision_timestamp, policy_version, decision_outcome, confidence_score,
   confidence_band, triggered_rules, input_categories, regulatory_mapping,
   plain_english_explanation, oversight_pathway, retention_reference, integrity_hash
 
@@ -27,7 +27,7 @@ from gbd.explainer import plain_english
 from gbd.policy import PolicyBundle
 
 PACK_FIELDS = [
-    "pack_id", "decision_timestamp", "policy_version", "decision_outcome",
+    "pack_id", "submission_ref", "decision_timestamp", "policy_version", "decision_outcome",
     "confidence_score", "confidence_band", "triggered_rules", "input_categories",
     "regulatory_mapping", "plain_english_explanation", "oversight_pathway",
     "retention_reference", "integrity_hash",
@@ -64,8 +64,11 @@ def build_pack(
         "status": "evidenced",
     })
     pack: dict[str, Any] = {
-        "pack_id": pack_id or str(uuid.uuid5(_NAMESPACE, ts + bundle.policy_version + json.dumps(
-            [t["rule_id"] for t in result.triggered_rules]) + str(result.confidence_score))),
+        "pack_id": pack_id or str(uuid.uuid5(_NAMESPACE, ts + bundle.policy_version
+            + result.submission_ref
+            + json.dumps([t["rule_id"] for t in result.triggered_rules])
+            + str(result.confidence_score))),
+        "submission_ref": result.submission_ref,
         "decision_timestamp": ts,
         "policy_version": bundle.policy_version,
         "decision_outcome": result.decision_outcome,

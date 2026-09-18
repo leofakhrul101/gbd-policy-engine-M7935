@@ -76,3 +76,96 @@ Reviewer training, staffing, throughput — deployer process (AI Act 26(2)). Cal
 - Tests: 38 → 49. Two stale duplicate tests in `tests/` fixed (`quality_flag_17_1` → `17_4`, `action_context` → `action_taken`).
 
 Certificate top-level schema remains exactly 13 fields; all additions live inside `triggered_rules` and the SoR block, as the module docstring prescribes.
+
+---
+
+## v0.2.1 — 13 September 2026: four defects closed before submission
+
+Found by a line-by-line audit of the repository against the dissertation text.
+Each is recorded here because the dissertation reports them: a design-science
+artefact that hides its own failed conformance checks is not evidence of
+anything.
+
+**A1 · The Evidence Pack could not name the submission it decided.**
+`pack_id` was derived from timestamp, policy version, rule trace and confidence
+score. Two different submissions with the same signal profile in the same second
+produced byte-identical packs and the second could not be written to the log
+(`UNIQUE constraint failed: evidence_packs.pack_id`). A record that cannot be
+tied to a submission cannot be served on the recipient under Art 17(1), cannot
+be retrieved on an Art 16 notice, and cannot be reconciled against the
+Transparency Database.
+
+Fixed by adding `submission_ref` — a salted SHA-256 digest of the submission
+identifier, truncated to 32 hex characters — as the second field of the pack, and
+folding it into the `pack_id` derivation. The raw identifier never enters the
+pack, so Art 24(5)'s bar on personal data holds; the controller can resolve the
+digest against their own catalogue, and nobody else can. Schema is now 14 fields.
+Test 12.
+
+**A2 · The reviewer saw only the dimensions that fired.**
+`ReviewSession.signals()` returned four items, all derived from rules that had
+triggered. A reviewer who cannot see which dimensions stayed silent cannot judge
+whether the engine looked at the right things — which is exactly the competence
+WP29 requires (WP251rev.01, 21). `signals()` now returns all six risk dimensions,
+each marked fired or not-fired with its reason code, ahead of the four context
+items. Test 6.
+
+**A3 · The 17(4) sufficiency flag was never asserted.**
+The only test touching `quality_flag_17_4` accepted either `"thin"` or
+`"informational"`, and the demonstration record named `thin_reasons` produces
+`"informational"` — so the boundary thesis rested on a flag nothing pinned down.
+Test 13 now exercises the `thin` branch exactly: a lone strong fingerprint match
+gives QUARANTINE on one named fact, structurally complete under 17(3) and thin
+under 17(4). The looser assertion in `tests/test_engine.py` is now exact.
+
+**A4 · Notice-triggered re-entry produced an orphan decision.**
+`reentry_from_notice()` recorded the trigger source and notice reference but
+nothing linking the new decision to the one it re-opened. The rightsholder's
+route — the dissertation's answer to the third party Art 22 does not reach —
+therefore yielded a decision that could not be tied to the ALLOW it contested.
+`evaluate()` now takes `supersedes_pack_id` and the statement of reasons carries
+it. Test 8.
+
+Housekeeping: `pyproject.toml` version 0.1.0 → 0.2.1; two stale, never-collected
+test files deleted from the repository root; the `tests/test_v02.py` docstring
+now points at this file rather than a changelog that does not exist.
+
+Tests: 49 → 52, all passing.
+
+---
+
+## v0.2.2 — 18 September 2026: the statement of reasons, written for its reader
+
+Article 17(4) requires a statement that is "clear and easily comprehensible" and precise enough
+to let the recipient "effectively exercise the possibilities for redress". Until now the
+recipient-facing text told an artist that they could contest the decision "via:
+internal-complaint-v1", and reported a confidence score and a policy version in the same breath.
+Every one of those is a machine reference. None of them is comprehensible to the person the
+article is written for.
+
+The decision is now expressed in two registers from one source of truth. The sentences say what
+happened, what it rested on, and what the artist can do — the redress route named in words, from
+a new `oversight_pathway_label` in the policy bundle. The identifiers are gathered into a single
+closing line, explicitly labelled as a reference for a query or an audit.
+
+Nothing moved in the sealed payload or the Commission export: `oversight_pathway` still carries
+`internal-complaint-v1`, because that is the value an auditor resolves. The record keeps the
+scheme identifier; the person gets a sentence. That split is the chapter's argument about form
+and sufficiency, made operational rather than asserted.
+
+Also in this release, so that what a reviewer opens matches what the dissertation describes:
+
+- `docs/demo.html` — the engine ported to JavaScript and running in the browser, verified
+  field-for-field and hash-for-hash against this implementation over 576 signal combinations.
+  `README` now points a non-running reader here. `docs/walkthrough.html` is kept and labelled as
+  the v0.1.0 exhibit.
+- `demo/app.py` loaded `policies/v0.1.0.yaml` and simulated a "v0.2.0" by moving a threshold
+  slider — a version number that now collides with a real bundle meaning something else. It runs
+  the real v0.2.0 and simulates a prospective 0.3.0.
+- `norms/norms.yaml` header said one norm was verified; four are, and the file's own status
+  fields have said so since 4 August. `SOURCES.md` pointed at the v0.1.0 bundle and repeated the
+  stale statuses.
+- `APPENDIX-four-edge-cases.md` is now labelled as the v0.1.0 exhibit it is.
+- `LICENSE.md` added: all rights reserved, with an express grant for assessment.
+
+Tests: 52, all passing.
